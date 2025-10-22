@@ -9,33 +9,31 @@ export class ReportController {
         let back = false;
 
         while (!back) {
-            const options = [
-                '--- REPORTES SIMPLES ---',
-                '1. Listado de Deportes',
-                '2. Apostadores con Saldo',
-                '3. Métodos de Pago',
-                '--- REPORTES INTERMEDIOS ---',
-                '4. Apuestas por Deporte',
-                '5. Partidos por Liga',
-                '6. Transacciones por Mes',
-                '7. Equipos Más Activos',
-                '--- REPORTES COMPLEJOS ---',
-                '8. Top Apostadores por Ganancias',
-                '9. Cuotas Más Rentables',
-                '10. Rendimiento de Ligas',
-                'Volver'
-            ];
-
             ConsoleUtils.showHeader('Módulo de Reportes');
+            console.log();
             
-            for (const option of options) {
-                if (option.startsWith('---')) {
-                    console.log();
-                    console.log(ConsoleUtils.info(option));
-                } else {
-                    console.log(`  ${option}`);
-                }
-            }
+            // REPORTES SIMPLES
+            ConsoleUtils.info('--- REPORTES SIMPLES ---');
+            console.log('  1. Listado de Deportes');
+            console.log('  2. Apostadores con Saldo');
+            console.log('  3. Métodos de Pago');
+            console.log();
+            
+            // REPORTES INTERMEDIOS
+            ConsoleUtils.info('--- REPORTES INTERMEDIOS ---');
+            console.log('  4. Apuestas por Deporte');
+            console.log('  5. Partidos por Liga');
+            console.log('  6. Transacciones por Mes');
+            console.log('  7. Equipos Más Activos');
+            console.log();
+            
+            // REPORTES COMPLEJOS
+            ConsoleUtils.info('--- REPORTES COMPLEJOS ---');
+            console.log('  8. Top Apostadores por Ganancias');
+            console.log('  9. Cuotas Más Rentables');
+            console.log('  10. Rendimiento de Ligas');
+            console.log();
+            console.log('  11. Volver');
             
             console.log();
             const choice = ConsoleUtils.inputNumber('Seleccione una opción', 1, 11);
