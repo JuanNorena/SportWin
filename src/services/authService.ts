@@ -1,5 +1,6 @@
 import * as bcrypt from 'bcrypt';
 import db from '../utils/database';
+import { RolService } from './catalogoService';
 
 /**
  * Interface para el usuario autenticado
@@ -10,7 +11,8 @@ export interface AuthUser {
     nombre: string;
     apellido: string;
     email: string;
-    rol: 'admin' | 'operador' | 'apostador';
+    rol: string;
+    id_rol: number;
 }
 
 /**
@@ -26,9 +28,10 @@ export class AuthService {
     public static async login(username: string, password: string): Promise<AuthUser | null> {
         try {
             const result = await db.query(
-                `SELECT id_usuario, username, password_hash, nombre, apellido, email, rol, activo 
-                 FROM Usuario 
-                 WHERE username = $1 AND activo = true`,
+                `SELECT u.id_usuario, u.username, u.password_hash, u.nombre, u.apellido, u.email, u.id_rol, u.activo, r.nombre as rol_nombre
+                 FROM Usuario u
+                 JOIN Rol r ON u.id_rol = r.id_rol
+                 WHERE u.username = $1 AND u.activo = true`,
                 [username]
             );
 
@@ -58,7 +61,8 @@ export class AuthService {
                 nombre: user.nombre,
                 apellido: user.apellido,
                 email: user.email,
-                rol: user.rol
+                rol: user.rol_nombre,
+                id_rol: user.id_rol
             };
 
             return this.currentUser;
@@ -112,15 +116,21 @@ export class AuthService {
         nombre: string,
         apellido: string,
         email: string,
-        rol: 'admin' | 'operador' | 'apostador'
+        rolNombre: string
     ): Promise<number> {
         const passwordHash = await this.hashPassword(password);
         
+        // Obtener ID del rol por nombre
+        const rol = await RolService.getByNombre(rolNombre);
+        if (!rol) {
+            throw new Error(`Rol no encontrado: ${rolNombre}`);
+        }
+        
         const result = await db.query(
-            `INSERT INTO Usuario (username, password_hash, nombre, apellido, email, rol) 
+            `INSERT INTO Usuario (username, password_hash, nombre, apellido, email, id_rol) 
              VALUES ($1, $2, $3, $4, $5, $6) 
              RETURNING id_usuario`,
-            [username, passwordHash, nombre, apellido, email, rol]
+            [username, passwordHash, nombre, apellido, email, rol.id_rol]
         );
 
         return result.rows[0].id_usuario;

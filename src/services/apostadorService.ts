@@ -11,17 +11,16 @@ export class ApostadorService {
     public static async create(data: Partial<Apostador>): Promise<number> {
         const result = await db.query(
             `INSERT INTO Apostador 
-             (id_usuario, documento, tipo_documento, telefono, direccion, ciudad, pais, fecha_nacimiento, verificado)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+             (id_usuario, documento, id_tipo_documento, telefono, direccion, id_ciudad, fecha_nacimiento, verificado)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
              RETURNING id_apostador`,
             [
                 data.id_usuario,
                 data.documento,
-                data.tipo_documento,
+                data.id_tipo_documento,
                 data.telefono,
                 data.direccion,
-                data.ciudad,
-                data.pais || 'Colombia',
+                data.id_ciudad,
                 data.fecha_nacimiento,
                 data.verificado || false
             ]
@@ -88,9 +87,9 @@ export class ApostadorService {
             fields.push(`direccion = $${paramIndex++}`);
             values.push(data.direccion);
         }
-        if (data.ciudad !== undefined) {
-            fields.push(`ciudad = $${paramIndex++}`);
-            values.push(data.ciudad);
+        if (data.id_ciudad !== undefined) {
+            fields.push(`id_ciudad = $${paramIndex++}`);
+            values.push(data.id_ciudad);
         }
         if (data.verificado !== undefined) {
             fields.push(`verificado = $${paramIndex++}`);

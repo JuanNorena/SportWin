@@ -341,29 +341,41 @@ export class TransaccionController {
 
         const idApostador = apostadorExiste.id_apostador;
         
-        const transacciones = await TransaccionService.getByApostador(idApostador);
+        // Obtener transacciones con JOINs para mostrar nombres
+        const transaccionesResult = await db.query(
+            `SELECT 
+                t.*,
+                tt.nombre as tipo_nombre,
+                e.nombre as estado_nombre
+             FROM Transaccion t
+             JOIN TipoTransaccion tt ON t.id_tipo_transaccion = tt.id_tipo_transaccion
+             JOIN Estado e ON t.id_estado = e.id_estado
+             WHERE t.id_apostador = $1
+             ORDER BY t.fecha_transaccion DESC`,
+            [idApostador]
+        );
 
         console.log();
-        if (transacciones.length === 0) {
+        if (transaccionesResult.rows.length === 0) {
             ConsoleUtils.warning('No hay transacciones registradas para este apostador');
         } else {
-            ConsoleUtils.success(`Se encontraron ${transacciones.length} transacciones`);
+            ConsoleUtils.success(`Se encontraron ${transaccionesResult.rows.length} transacciones`);
             console.log();
             
-            const data = transacciones.slice(0, 20).map(t => ({
+            const data = transaccionesResult.rows.slice(0, 20).map((t: any) => ({
                 id: t.id_transaccion,
-                tipo: t.tipo,
+                tipo: t.tipo_nombre,
                 monto: ConsoleUtils.formatCurrency(t.monto),
                 comisión: ConsoleUtils.formatCurrency(t.comision),
                 neto: ConsoleUtils.formatCurrency(t.monto_neto),
                 fecha: ConsoleUtils.formatDate(t.fecha_transaccion),
-                estado: t.estado
+                estado: t.estado_nombre
             }));
 
             ConsoleUtils.showTable(data, ['ID', 'Tipo', 'Monto', 'Comisión', 'Neto', 'Fecha', 'Estado']);
             
-            if (transacciones.length > 20) {
-                ConsoleUtils.info(`(Mostrando 20 de ${transacciones.length} transacciones)`);
+            if (transaccionesResult.rows.length > 20) {
+                ConsoleUtils.info(`(Mostrando 20 de ${transaccionesResult.rows.length} transacciones)`);
             }
         }
 

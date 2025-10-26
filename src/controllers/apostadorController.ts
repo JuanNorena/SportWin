@@ -1,6 +1,8 @@
 import { ConsoleUtils } from '../utils/console';
 import { ApostadorService } from '../services/apostadorService';
 import { AuthService } from '../services/authService';
+import { CiudadService, TipoDocumentoService } from '../services/catalogoService';
+import db from '../utils/database';
 
 /**
  * Controlador de Apostadores
@@ -58,12 +60,23 @@ export class ApostadorController {
     private static async listar(): Promise<void> {
         ConsoleUtils.showHeader('Listado de Apostadores');
 
-        const apostadores = await ApostadorService.getAll();
+        // Obtener apostadores con JOINs para mostrar nombres en lugar de IDs
+        const result = await db.query(
+            `SELECT 
+                a.id_apostador,
+                a.documento,
+                c.nombre as ciudad,
+                a.saldo_actual,
+                a.verificado
+             FROM Apostador a
+             LEFT JOIN Ciudad c ON a.id_ciudad = c.id_ciudad
+             ORDER BY a.fecha_registro DESC`
+        );
 
-        if (apostadores.length === 0) {
+        if (result.rows.length === 0) {
             ConsoleUtils.warning('No hay apostadores registrados');
         } else {
-            const data = apostadores.map(a => ({
+            const data = result.rows.map((a: any) => ({
                 id: a.id_apostador,
                 documento: a.documento,
                 ciudad: a.ciudad || 'N/A',
@@ -84,16 +97,33 @@ export class ApostadorController {
         ConsoleUtils.showHeader('Buscar Apostador');
 
         const documento = ConsoleUtils.input('Documento del apostador');
-        const apostador = await ApostadorService.getByDocumento(documento);
+        
+        // Buscar con JOIN para obtener nombres
+        const result = await db.query(
+            `SELECT 
+                a.*,
+                td.nombre as tipo_documento_nombre,
+                c.nombre as ciudad_nombre,
+                d.nombre as departamento,
+                p.nombre as pais
+             FROM Apostador a
+             LEFT JOIN TipoDocumento td ON a.id_tipo_documento = td.id_tipo_documento
+             LEFT JOIN Ciudad c ON a.id_ciudad = c.id_ciudad
+             LEFT JOIN Departamento d ON c.id_departamento = d.id_departamento
+             LEFT JOIN Pais p ON d.id_pais = p.id_pais
+             WHERE a.documento = $1`,
+            [documento]
+        );
 
-        if (!apostador) {
+        if (result.rows.length === 0) {
             ConsoleUtils.error('Apostador no encontrado');
         } else {
+            const apostador = result.rows[0];
             console.log();
             ConsoleUtils.info(`ID: ${apostador.id_apostador}`);
-            ConsoleUtils.info(`Documento: ${apostador.documento} (${apostador.tipo_documento})`);
+            ConsoleUtils.info(`Documento: ${apostador.documento} (${apostador.tipo_documento_nombre || 'N/A'})`);
             ConsoleUtils.info(`Teléfono: ${apostador.telefono || 'N/A'}`);
-            ConsoleUtils.info(`Ciudad: ${apostador.ciudad || 'N/A'}`);
+            ConsoleUtils.info(`Ciudad: ${apostador.ciudad_nombre || 'N/A'}${apostador.departamento ? ', ' + apostador.departamento : ''}`);
             ConsoleUtils.info(`Saldo: ${ConsoleUtils.formatCurrency(apostador.saldo_actual)}`);
             ConsoleUtils.info(`Verificado: ${apostador.verificado ? 'Sí' : 'No'}`);
         }
@@ -116,22 +146,41 @@ export class ApostadorController {
 
         const userId = await AuthService.createUser(username, password, nombre, apellido, email, 'apostador');
 
-        // Luego crear apostador
-        const documento = ConsoleUtils.input('Documento');
-        const tipoDocumento = ConsoleUtils.input('Tipo de Documento (CC/CE/TI/Pasaporte)') as any;
+        // Mostrar tipos de documento disponibles
+        const tiposDoc = await TipoDocumentoService.getAll();
+        ConsoleUtils.info('\nTipos de documento disponibles:');
+        tiposDoc.forEach(td => console.log(`  - ${td.codigo}: ${td.nombre}`));
+        
+        const documento = ConsoleUtils.input('\nDocumento');
+        const codigoTipoDoc = ConsoleUtils.input('Código de Tipo de Documento (ej: CC, CE, TI)');
+        const tipoDoc = await TipoDocumentoService.getByCodigo(codigoTipoDoc);
+        
+        if (!tipoDoc) {
+            ConsoleUtils.error('Tipo de documento no válido');
+            ConsoleUtils.pause();
+            return;
+        }
+
         const telefono = ConsoleUtils.input('Teléfono', false);
         const direccion = ConsoleUtils.input('Dirección', false);
-        const ciudad = ConsoleUtils.input('Ciudad', false);
+        
+        // Mostrar ciudades disponibles de Colombia
+        const ciudades = await CiudadService.getCiudadesCompletasColombias();
+        ConsoleUtils.info('\nEjemplos de ciudades disponibles (primeras 10):');
+        ciudades.slice(0, 10).forEach(c => console.log(`  - ID ${c.id_ciudad}: ${c.ciudad}, ${c.departamento}`));
+        
+        const idCiudadStr = ConsoleUtils.input('ID de Ciudad (opcional, deje en blanco para omitir)', false);
+        const idCiudad = idCiudadStr ? parseInt(idCiudadStr) : undefined;
+        
         const fechaNacimiento = ConsoleUtils.input('Fecha de Nacimiento (YYYY-MM-DD)');
 
         const id = await ApostadorService.create({
             id_usuario: userId,
             documento,
-            tipo_documento: tipoDocumento,
+            id_tipo_documento: tipoDoc.id_tipo_documento,
             telefono: telefono || undefined,
             direccion: direccion || undefined,
-            ciudad: ciudad || undefined,
-            pais: 'Colombia',
+            id_ciudad: idCiudad,
             fecha_nacimiento: new Date(fechaNacimiento)
         });
 
@@ -158,12 +207,24 @@ export class ApostadorController {
         
         const telefono = ConsoleUtils.input('Nuevo teléfono', false);
         const direccion = ConsoleUtils.input('Nueva dirección', false);
-        const ciudad = ConsoleUtils.input('Nueva ciudad', false);
+        
+        // Opción para cambiar ciudad
+        const cambiarCiudad = ConsoleUtils.input('¿Cambiar ciudad? (s/n)', false);
+        let idCiudad = apostador.id_ciudad;
+        
+        if (cambiarCiudad?.toLowerCase() === 's') {
+            const ciudades = await CiudadService.getCiudadesCompletasColombias();
+            ConsoleUtils.info('\nEjemplos de ciudades disponibles (primeras 10):');
+            ciudades.slice(0, 10).forEach(c => console.log(`  - ID ${c.id_ciudad}: ${c.ciudad}, ${c.departamento}`));
+            
+            const idCiudadStr = ConsoleUtils.input('Nuevo ID de Ciudad');
+            idCiudad = parseInt(idCiudadStr);
+        }
 
         const updated = await ApostadorService.update(id, {
             telefono: telefono || apostador.telefono,
             direccion: direccion || apostador.direccion,
-            ciudad: ciudad || apostador.ciudad
+            id_ciudad: idCiudad
         });
 
         if (updated) {

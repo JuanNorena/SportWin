@@ -6,6 +6,34 @@ import { Transaccion } from '../models';
  */
 export class TransaccionService {
     /**
+     * Obtener ID de tipo de transacción por código
+     */
+    private static async getTipoTransaccionId(codigo: string): Promise<number> {
+        const result = await db.query(
+            'SELECT id_tipo_transaccion FROM TipoTransaccion WHERE codigo = $1',
+            [codigo]
+        );
+        if (result.rows.length === 0) {
+            throw new Error(`Tipo de transacción no encontrado: ${codigo}`);
+        }
+        return result.rows[0].id_tipo_transaccion;
+    }
+
+    /**
+     * Obtener ID de estado por código
+     */
+    private static async getEstadoId(codigo: string, entidad: string = 'TRANSACCION'): Promise<number> {
+        const result = await db.query(
+            'SELECT id_estado FROM Estado WHERE codigo = $1 AND entidad = $2',
+            [codigo, entidad]
+        );
+        if (result.rows.length === 0) {
+            throw new Error(`Estado no encontrado: ${codigo}`);
+        }
+        return result.rows[0].id_estado;
+    }
+
+    /**
      * Crear depósito
      */
     public static async createDeposito(
@@ -28,13 +56,17 @@ export class TransaccionService {
             const comision = (monto * metodoPagoResult.rows[0].comision) / 100;
             const montoNeto = monto - comision;
 
+            // Obtener IDs necesarios
+            const idTipoDeposito = await this.getTipoTransaccionId('DEPOSITO');
+            const idEstadoCompletada = await this.getEstadoId('COMPLETADA');
+
             // Crear transacción
             const result = await client.query(
                 `INSERT INTO Transaccion 
-                 (id_apostador, id_metodo_pago, tipo, monto, comision, monto_neto, estado, referencia, descripcion)
-                 VALUES ($1, $2, 'deposito', $3, $4, $5, 'completada', $6, 'Depósito a cuenta')
+                 (id_apostador, id_metodo_pago, id_tipo_transaccion, monto, comision, monto_neto, id_estado, referencia, descripcion)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Depósito a cuenta')
                  RETURNING id_transaccion`,
-                [idApostador, idMetodoPago, monto, comision, montoNeto, referencia]
+                [idApostador, idMetodoPago, idTipoDeposito, monto, comision, montoNeto, idEstadoCompletada, referencia]
             );
 
             return result.rows[0].id_transaccion;
@@ -76,13 +108,17 @@ export class TransaccionService {
                 throw new Error('Saldo insuficiente para el retiro');
             }
 
+            // Obtener IDs necesarios
+            const idTipoRetiro = await this.getTipoTransaccionId('RETIRO');
+            const idEstadoCompletada = await this.getEstadoId('COMPLETADA');
+
             // Crear transacción
             const result = await client.query(
                 `INSERT INTO Transaccion 
-                 (id_apostador, id_metodo_pago, tipo, monto, comision, monto_neto, estado, referencia, descripcion)
-                 VALUES ($1, $2, 'retiro', $3, $4, $5, 'completada', $6, 'Retiro de fondos')
+                 (id_apostador, id_metodo_pago, id_tipo_transaccion, monto, comision, monto_neto, id_estado, referencia, descripcion)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Retiro de fondos')
                  RETURNING id_transaccion`,
-                [idApostador, idMetodoPago, monto, comision, montoNeto, referencia]
+                [idApostador, idMetodoPago, idTipoRetiro, monto, comision, montoNeto, idEstadoCompletada, referencia]
             );
 
             return result.rows[0].id_transaccion;
@@ -124,10 +160,13 @@ export class TransaccionService {
     /**
      * Obtener transacciones por tipo
      */
-    public static async getByTipo(tipo: string): Promise<Transaccion[]> {
+    public static async getByTipo(codigoTipo: string): Promise<Transaccion[]> {
         const result = await db.query<Transaccion>(
-            'SELECT * FROM Transaccion WHERE tipo = $1 ORDER BY fecha_transaccion DESC',
-            [tipo]
+            `SELECT t.* FROM Transaccion t
+             JOIN TipoTransaccion tt ON t.id_tipo_transaccion = tt.id_tipo_transaccion
+             WHERE tt.codigo = $1
+             ORDER BY t.fecha_transaccion DESC`,
+            [codigoTipo]
         );
         return result.rows;
     }
@@ -138,13 +177,15 @@ export class TransaccionService {
     public static async getHistorialFinanciero(idApostador: number): Promise<any> {
         const result = await db.query(
             `SELECT 
-                SUM(CASE WHEN tipo = 'deposito' THEN monto_neto ELSE 0 END) as total_depositos,
-                SUM(CASE WHEN tipo = 'retiro' THEN monto_neto ELSE 0 END) as total_retiros,
-                SUM(CASE WHEN tipo = 'apuesta' THEN monto_neto ELSE 0 END) as total_apostado,
-                SUM(CASE WHEN tipo = 'ganancia' THEN monto_neto ELSE 0 END) as total_ganancias,
+                SUM(CASE WHEN tt.codigo = 'DEPOSITO' THEN t.monto_neto ELSE 0 END) as total_depositos,
+                SUM(CASE WHEN tt.codigo = 'RETIRO' THEN t.monto_neto ELSE 0 END) as total_retiros,
+                SUM(CASE WHEN tt.codigo = 'APUESTA' THEN t.monto_neto ELSE 0 END) as total_apostado,
+                SUM(CASE WHEN tt.codigo = 'GANANCIA' THEN t.monto_neto ELSE 0 END) as total_ganancias,
                 COUNT(*) as total_transacciones
-             FROM Transaccion
-             WHERE id_apostador = $1 AND estado = 'completada'`,
+             FROM Transaccion t
+             JOIN TipoTransaccion tt ON t.id_tipo_transaccion = tt.id_tipo_transaccion
+             JOIN Estado e ON t.id_estado = e.id_estado
+             WHERE t.id_apostador = $1 AND e.codigo = 'COMPLETADA' AND e.entidad = 'TRANSACCION'`,
             [idApostador]
         );
         return result.rows[0];

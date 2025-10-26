@@ -5,6 +5,8 @@ import { PartidoController } from './partidoController';
 import { ApuestaController } from './apuestaController';
 import { TransaccionController } from './transaccionController';
 import { ReportController } from './reportController';
+import { CatalogoController } from './catalogoController';
+import { TipoDocumentoService, CiudadService } from '../services/catalogoService';
 import db from '../utils/database';
 
 /**
@@ -173,24 +175,31 @@ export class MainController {
                 
                 const documento = ConsoleUtils.input('Número de documento');
                 
-                const tipoDocOptions = ['CC', 'CE', 'TI', 'Pasaporte'];
-                const tipoDocChoice = ConsoleUtils.showMenu('Tipo de documento', tipoDocOptions);
-                const tipo_documento = tipoDocOptions[tipoDocChoice - 1];
+                // Mostrar tipos de documento disponibles
+                const tiposDoc = await TipoDocumentoService.getAll();
+                ConsoleUtils.showTable(tiposDoc, ['id_tipo_documento', 'nombre', 'codigo']);
+                
+                const idTipoDocString = ConsoleUtils.input('ID del tipo de documento');
+                const id_tipo_documento = parseInt(idTipoDocString);
 
                 const telefono = ConsoleUtils.input('Teléfono');
                 const direccion = ConsoleUtils.input('Dirección');
-                const ciudad = ConsoleUtils.input('Ciudad');
-                const paisInput = ConsoleUtils.input('País (Enter para Colombia)', false);
-                const pais = paisInput || 'Colombia';
+                
+                // Mostrar ciudades de Colombia
+                const ciudades = await CiudadService.getCiudadesCompletasColombias();
+                ConsoleUtils.showTable(ciudades, ['id_ciudad', 'ciudad', 'departamento', 'pais']);
+                
+                const idCiudadString = ConsoleUtils.input('ID de la ciudad');
+                const id_ciudad = parseInt(idCiudadString);
                 
                 const fechaNacimiento = ConsoleUtils.input('Fecha de nacimiento (YYYY-MM-DD)');
 
                 // Crear apostador
                 await db.query(
                     `INSERT INTO Apostador 
-                     (id_usuario, documento, tipo_documento, telefono, direccion, ciudad, pais, fecha_nacimiento, verificado)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-                    [userId, documento, tipo_documento, telefono, direccion, ciudad, pais, fechaNacimiento, false]
+                     (id_usuario, documento, id_tipo_documento, telefono, direccion, id_ciudad, fecha_nacimiento, verificado)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                    [userId, documento, id_tipo_documento, telefono, direccion, id_ciudad, fechaNacimiento, false]
                 );
 
                 ConsoleUtils.success('¡Perfil de apostador creado!');
@@ -274,6 +283,7 @@ export class MainController {
                 'Gestión de Apuestas',
                 'Transacciones',
                 'Reportes',
+                'Catálogos del Sistema',
                 'Cerrar Sesión',
                 'Salir'
             ];
@@ -297,12 +307,15 @@ export class MainController {
                     await ReportController.menu();
                     break;
                 case 6:
+                    await CatalogoController.menu();
+                    break;
+                case 7:
                     AuthService.logout();
                     ConsoleUtils.success('Sesión cerrada');
                     ConsoleUtils.pause();
                     await this.start();
                     return;
-                case 7:
+                case 8:
                     exit = true;
                     break;
             }

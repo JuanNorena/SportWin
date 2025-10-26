@@ -1,5 +1,6 @@
 import { ConsoleUtils } from '../utils/console';
 import { PartidoService } from '../services/partidoService';
+import db from '../utils/database';
 
 /**
  * Controlador de Partidos
@@ -95,17 +96,40 @@ export class PartidoController {
         ConsoleUtils.showHeader('Buscar Partido');
 
         const id = ConsoleUtils.inputNumber('ID del partido');
-        const partido = await PartidoService.getById(id);
+        
+        // Buscar con JOINs para obtener nombres
+        const result = await db.query(
+            `SELECT 
+                p.*,
+                est.nombre as estado_nombre,
+                esta.nombre as estadio_nombre,
+                arb.nombre || ' ' || arb.apellido as arbitro_nombre,
+                el.nombre as equipo_local,
+                ev.nombre as equipo_visitante,
+                l.nombre as liga
+             FROM Partido p
+             LEFT JOIN Estado est ON p.id_estado = est.id_estado
+             LEFT JOIN Estadio esta ON p.id_estadio = esta.id_estadio
+             LEFT JOIN Arbitro arb ON p.id_arbitro = arb.id_arbitro
+             LEFT JOIN Equipo el ON p.id_equipo_local = el.id_equipo
+             LEFT JOIN Equipo ev ON p.id_equipo_visitante = ev.id_equipo
+             LEFT JOIN Liga l ON p.id_liga = l.id_liga
+             WHERE p.id_partido = $1`,
+            [id]
+        );
 
-        if (!partido) {
+        if (result.rows.length === 0) {
             ConsoleUtils.error('Partido no encontrado');
         } else {
+            const partido = result.rows[0];
             console.log();
             ConsoleUtils.info(`ID: ${partido.id_partido}`);
+            ConsoleUtils.info(`Liga: ${partido.liga}`);
+            ConsoleUtils.info(`Partido: ${partido.equipo_local} vs ${partido.equipo_visitante}`);
             ConsoleUtils.info(`Fecha: ${ConsoleUtils.formatDate(partido.fecha_hora)}`);
-            ConsoleUtils.info(`Estado: ${partido.estado}`);
-            ConsoleUtils.info(`Estadio: ${partido.estadio || 'N/A'}`);
-            ConsoleUtils.info(`Árbitro: ${partido.arbitro || 'N/A'}`);
+            ConsoleUtils.info(`Estado: ${partido.estado_nombre}`);
+            ConsoleUtils.info(`Estadio: ${partido.estadio_nombre || 'N/A'}`);
+            ConsoleUtils.info(`Árbitro: ${partido.arbitro_nombre || 'N/A'}`);
         }
 
         ConsoleUtils.pause();
@@ -118,17 +142,35 @@ export class PartidoController {
         const idEquipoLocal = ConsoleUtils.inputNumber('ID del Equipo Local');
         const idEquipoVisitante = ConsoleUtils.inputNumber('ID del Equipo Visitante');
         const fechaHora = ConsoleUtils.input('Fecha y Hora (YYYY-MM-DD HH:MM)');
-        const estadio = ConsoleUtils.input('Estadio', false);
-        const arbitro = ConsoleUtils.input('Árbitro', false);
+        
+        // Opcionalmente asignar estadio
+        const conEstadio = ConsoleUtils.input('¿Asignar estadio? (s/n)', false);
+        let idEstadio: number | undefined;
+        if (conEstadio?.toLowerCase() === 's') {
+            idEstadio = ConsoleUtils.inputNumber('ID del Estadio');
+        }
+        
+        // Opcionalmente asignar árbitro
+        const conArbitro = ConsoleUtils.input('¿Asignar árbitro? (s/n)', false);
+        let idArbitro: number | undefined;
+        if (conArbitro?.toLowerCase() === 's') {
+            idArbitro = ConsoleUtils.inputNumber('ID del Árbitro');
+        }
+
+        // Obtener ID del estado PROGRAMADO
+        const estadoResult = await db.query(
+            'SELECT id_estado FROM Estado WHERE codigo = $1 AND entidad = $2',
+            ['PROGRAMADO', 'PARTIDO']
+        );
 
         const id = await PartidoService.create({
             id_liga: idLiga,
             id_equipo_local: idEquipoLocal,
             id_equipo_visitante: idEquipoVisitante,
             fecha_hora: new Date(fechaHora),
-            estadio: estadio || undefined,
-            arbitro: arbitro || undefined,
-            estado: 'programado'
+            id_estadio: idEstadio,
+            id_arbitro: idArbitro,
+            id_estado: estadoResult.rows[0].id_estado
         });
 
         ConsoleUtils.success(`Partido creado exitosamente con ID: ${id}`);
@@ -139,10 +181,19 @@ export class PartidoController {
         ConsoleUtils.showHeader('Actualizar Estado de Partido');
 
         const id = ConsoleUtils.inputNumber('ID del partido');
-        ConsoleUtils.info('Estados: programado, en_curso, finalizado, suspendido, cancelado');
-        const estado = ConsoleUtils.input('Nuevo estado');
+        
+        // Mostrar estados disponibles
+        const estadosResult = await db.query(
+            'SELECT id_estado, nombre, codigo FROM Estado WHERE entidad = $1 AND activo = true',
+            ['PARTIDO']
+        );
+        
+        ConsoleUtils.info('Estados disponibles:');
+        estadosResult.rows.forEach((e: any) => console.log(`  - ID ${e.id_estado}: ${e.nombre} (${e.codigo})`));
+        
+        const idEstado = ConsoleUtils.inputNumber('ID del nuevo estado');
 
-        const updated = await PartidoService.updateEstado(id, estado);
+        const updated = await PartidoService.updateEstado(id, idEstado);
 
         if (updated) {
             ConsoleUtils.success('Estado actualizado exitosamente');

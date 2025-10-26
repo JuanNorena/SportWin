@@ -17,6 +17,158 @@ DROP TABLE IF EXISTS Deporte CASCADE;
 DROP TABLE IF EXISTS Apostador CASCADE;
 DROP TABLE IF EXISTS MetodoPago CASCADE;
 DROP TABLE IF EXISTS Usuario CASCADE;
+DROP TABLE IF EXISTS TipoTransaccion CASCADE;
+DROP TABLE IF EXISTS Estado CASCADE;
+DROP TABLE IF EXISTS TipoDocumento CASCADE;
+DROP TABLE IF EXISTS Departamento CASCADE;
+DROP TABLE IF EXISTS Ciudad CASCADE;
+DROP TABLE IF EXISTS Pais CASCADE;
+DROP TABLE IF EXISTS Rol CASCADE;
+DROP TABLE IF EXISTS Estadio CASCADE;
+DROP TABLE IF EXISTS Arbitro CASCADE;
+DROP TABLE IF EXISTS Entrenador CASCADE;
+
+-- ============================================
+-- TABLAS CATÁLOGO (Nuevas tablas de referencia)
+-- ============================================
+
+-- ============================================
+-- TABLA: Pais
+-- Descripción: Catálogo de países
+-- ============================================
+CREATE TABLE Pais (
+    id_pais SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) UNIQUE NOT NULL,
+    codigo_iso VARCHAR(3) UNIQUE NOT NULL,
+    codigo_telefono VARCHAR(10),
+    activo BOOLEAN DEFAULT TRUE
+);
+
+-- ============================================
+-- TABLA: Departamento
+-- Descripción: Departamentos/Estados/Provincias
+-- ============================================
+CREATE TABLE Departamento (
+    id_departamento SERIAL PRIMARY KEY,
+    id_pais INTEGER REFERENCES Pais(id_pais) ON DELETE CASCADE,
+    nombre VARCHAR(100) NOT NULL,
+    codigo VARCHAR(10),
+    activo BOOLEAN DEFAULT TRUE,
+    UNIQUE(id_pais, nombre)
+);
+
+-- ============================================
+-- TABLA: Ciudad
+-- Descripción: Ciudades
+-- ============================================
+CREATE TABLE Ciudad (
+    id_ciudad SERIAL PRIMARY KEY,
+    id_departamento INTEGER REFERENCES Departamento(id_departamento) ON DELETE CASCADE,
+    nombre VARCHAR(100) NOT NULL,
+    codigo_postal VARCHAR(20),
+    activo BOOLEAN DEFAULT TRUE,
+    UNIQUE(id_departamento, nombre)
+);
+
+-- ============================================
+-- TABLA: Estado
+-- Descripción: Estados genéricos para diferentes entidades (Partido, Apuesta, Transacción, etc.)
+-- ============================================
+CREATE TABLE Estado (
+    id_estado SERIAL PRIMARY KEY,
+    entidad VARCHAR(50) NOT NULL,
+    nombre VARCHAR(50) NOT NULL,
+    codigo VARCHAR(20) NOT NULL,
+    descripcion TEXT,
+    activo BOOLEAN DEFAULT TRUE,
+    UNIQUE(entidad, codigo)
+);
+
+-- ============================================
+-- TABLA: Rol
+-- Descripción: Roles de usuario en el sistema
+-- ============================================
+CREATE TABLE Rol (
+    id_rol SERIAL PRIMARY KEY,
+    nombre VARCHAR(50) UNIQUE NOT NULL,
+    descripcion TEXT,
+    permisos TEXT,
+    activo BOOLEAN DEFAULT TRUE
+);
+
+-- ============================================
+-- TABLA: TipoDocumento
+-- Descripción: Tipos de documentos de identidad
+-- ============================================
+CREATE TABLE TipoDocumento (
+    id_tipo_documento SERIAL PRIMARY KEY,
+    nombre VARCHAR(50) UNIQUE NOT NULL,
+    codigo VARCHAR(10) UNIQUE NOT NULL,
+    descripcion TEXT,
+    activo BOOLEAN DEFAULT TRUE
+);
+
+-- ============================================
+-- TABLA: TipoTransaccion
+-- Descripción: Tipos de transacciones financieras
+-- ============================================
+CREATE TABLE TipoTransaccion (
+    id_tipo_transaccion SERIAL PRIMARY KEY,
+    nombre VARCHAR(50) UNIQUE NOT NULL,
+    codigo VARCHAR(20) UNIQUE NOT NULL,
+    descripcion TEXT,
+    afecta_saldo VARCHAR(20) CHECK (afecta_saldo IN ('suma', 'resta', 'neutro')),
+    activo BOOLEAN DEFAULT TRUE
+);
+
+-- ============================================
+-- TABLA: Entrenador
+-- Descripción: Entrenadores de equipos deportivos
+-- ============================================
+CREATE TABLE Entrenador (
+    id_entrenador SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    id_pais INTEGER REFERENCES Pais(id_pais),
+    fecha_nacimiento DATE,
+    licencia VARCHAR(50),
+    experiencia_años INTEGER,
+    foto_url VARCHAR(255),
+    activo BOOLEAN DEFAULT TRUE
+);
+
+-- ============================================
+-- TABLA: Arbitro
+-- Descripción: Árbitros de eventos deportivos
+-- ============================================
+CREATE TABLE Arbitro (
+    id_arbitro SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    id_pais INTEGER REFERENCES Pais(id_pais),
+    fecha_nacimiento DATE,
+    categoria VARCHAR(50),
+    años_experiencia INTEGER,
+    foto_url VARCHAR(255),
+    activo BOOLEAN DEFAULT TRUE
+);
+
+-- ============================================
+-- TABLA: Estadio
+-- Descripción: Estadios donde se realizan los partidos
+-- ============================================
+CREATE TABLE Estadio (
+    id_estadio SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) UNIQUE NOT NULL,
+    id_ciudad INTEGER REFERENCES Ciudad(id_ciudad),
+    direccion VARCHAR(200),
+    capacidad INTEGER,
+    año_construccion INTEGER,
+    tipo_cesped VARCHAR(50),
+    techado BOOLEAN DEFAULT FALSE,
+    foto_url VARCHAR(255),
+    activo BOOLEAN DEFAULT TRUE
+);
 
 -- ============================================
 -- TABLA: Usuario
@@ -29,7 +181,7 @@ CREATE TABLE Usuario (
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
-    rol VARCHAR(20) NOT NULL CHECK (rol IN ('admin', 'operador', 'apostador')),
+    id_rol INTEGER REFERENCES Rol(id_rol),
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ultimo_acceso TIMESTAMP,
     activo BOOLEAN DEFAULT TRUE
@@ -55,11 +207,10 @@ CREATE TABLE Apostador (
     id_apostador SERIAL PRIMARY KEY,
     id_usuario INTEGER REFERENCES Usuario(id_usuario) ON DELETE CASCADE,
     documento VARCHAR(20) UNIQUE NOT NULL,
-    tipo_documento VARCHAR(10) NOT NULL CHECK (tipo_documento IN ('CC', 'CE', 'TI', 'Pasaporte')),
+    id_tipo_documento INTEGER REFERENCES TipoDocumento(id_tipo_documento),
     telefono VARCHAR(20),
     direccion VARCHAR(200),
-    ciudad VARCHAR(100),
-    pais VARCHAR(100) DEFAULT 'Colombia',
+    id_ciudad INTEGER REFERENCES Ciudad(id_ciudad),
     fecha_nacimiento DATE NOT NULL,
     saldo_actual DECIMAL(15,2) DEFAULT 0.00,
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -86,7 +237,7 @@ CREATE TABLE Liga (
     id_liga SERIAL PRIMARY KEY,
     id_deporte INTEGER REFERENCES Deporte(id_deporte) ON DELETE CASCADE,
     nombre VARCHAR(100) NOT NULL,
-    pais VARCHAR(100),
+    id_pais INTEGER REFERENCES Pais(id_pais),
     temporada VARCHAR(20),
     fecha_inicio DATE,
     fecha_fin DATE,
@@ -101,11 +252,12 @@ CREATE TABLE Equipo (
     id_equipo SERIAL PRIMARY KEY,
     id_liga INTEGER REFERENCES Liga(id_liga) ON DELETE CASCADE,
     nombre VARCHAR(100) NOT NULL,
-    pais VARCHAR(100),
-    ciudad VARCHAR(100),
-    estadio VARCHAR(100),
-    entrenador VARCHAR(100),
+    id_pais INTEGER REFERENCES Pais(id_pais),
+    id_ciudad INTEGER REFERENCES Ciudad(id_ciudad),
+    id_estadio INTEGER REFERENCES Estadio(id_estadio),
+    id_entrenador INTEGER REFERENCES Entrenador(id_entrenador),
     fundacion INTEGER,
+    logo_url VARCHAR(255),
     activo BOOLEAN DEFAULT TRUE
 );
 
@@ -119,10 +271,10 @@ CREATE TABLE Partido (
     id_equipo_local INTEGER REFERENCES Equipo(id_equipo),
     id_equipo_visitante INTEGER REFERENCES Equipo(id_equipo),
     fecha_hora TIMESTAMP NOT NULL,
-    estadio VARCHAR(100),
+    id_estadio INTEGER REFERENCES Estadio(id_estadio),
     jornada INTEGER,
-    estado VARCHAR(20) DEFAULT 'programado' CHECK (estado IN ('programado', 'en_curso', 'finalizado', 'suspendido', 'cancelado')),
-    arbitro VARCHAR(100),
+    id_estado INTEGER REFERENCES Estado(id_estado),
+    id_arbitro INTEGER REFERENCES Arbitro(id_arbitro),
     asistencia INTEGER,
     CONSTRAINT diferentes_equipos CHECK (id_equipo_local != id_equipo_visitante)
 );
@@ -185,7 +337,7 @@ CREATE TABLE Apuesta (
     cuota_aplicada DECIMAL(6,2) NOT NULL,
     ganancia_potencial DECIMAL(15,2) NOT NULL,
     fecha_apuesta TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    estado VARCHAR(20) DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'ganada', 'perdida', 'cancelada', 'reembolsada')),
+    id_estado INTEGER REFERENCES Estado(id_estado),
     fecha_resolucion TIMESTAMP,
     ganancia_real DECIMAL(15,2) DEFAULT 0.00
 );
@@ -199,12 +351,12 @@ CREATE TABLE Transaccion (
     id_apostador INTEGER REFERENCES Apostador(id_apostador),
     id_metodo_pago INTEGER REFERENCES MetodoPago(id_metodo_pago),
     id_apuesta INTEGER REFERENCES Apuesta(id_apuesta),
-    tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('deposito', 'retiro', 'apuesta', 'ganancia', 'reembolso')),
+    id_tipo_transaccion INTEGER REFERENCES TipoTransaccion(id_tipo_transaccion),
     monto DECIMAL(15,2) NOT NULL,
     comision DECIMAL(15,2) DEFAULT 0.00,
     monto_neto DECIMAL(15,2) NOT NULL,
     fecha_transaccion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    estado VARCHAR(20) DEFAULT 'completada' CHECK (estado IN ('pendiente', 'completada', 'rechazada', 'cancelada')),
+    id_estado INTEGER REFERENCES Estado(id_estado),
     referencia VARCHAR(100),
     descripcion TEXT
 );
@@ -216,27 +368,35 @@ CREATE TABLE Transaccion (
 -- Índices para Usuario
 CREATE INDEX idx_usuario_username ON Usuario(username);
 CREATE INDEX idx_usuario_email ON Usuario(email);
-CREATE INDEX idx_usuario_rol ON Usuario(rol);
+CREATE INDEX idx_usuario_rol ON Usuario(id_rol);
 
 -- Índices para Apostador
 CREATE INDEX idx_apostador_documento ON Apostador(documento);
 CREATE INDEX idx_apostador_usuario ON Apostador(id_usuario);
+CREATE INDEX idx_apostador_ciudad ON Apostador(id_ciudad);
 
 -- Índices para Partido
 CREATE INDEX idx_partido_fecha ON Partido(fecha_hora);
-CREATE INDEX idx_partido_estado ON Partido(estado);
+CREATE INDEX idx_partido_estado ON Partido(id_estado);
 CREATE INDEX idx_partido_liga ON Partido(id_liga);
 CREATE INDEX idx_partido_equipos ON Partido(id_equipo_local, id_equipo_visitante);
+CREATE INDEX idx_partido_estadio ON Partido(id_estadio);
+CREATE INDEX idx_partido_arbitro ON Partido(id_arbitro);
 
 -- Índices para Apuesta
 CREATE INDEX idx_apuesta_apostador ON Apuesta(id_apostador);
 CREATE INDEX idx_apuesta_fecha ON Apuesta(fecha_apuesta);
-CREATE INDEX idx_apuesta_estado ON Apuesta(estado);
+CREATE INDEX idx_apuesta_estado ON Apuesta(id_estado);
 
 -- Índices para Transacción
 CREATE INDEX idx_transaccion_apostador ON Transaccion(id_apostador);
 CREATE INDEX idx_transaccion_fecha ON Transaccion(fecha_transaccion);
-CREATE INDEX idx_transaccion_tipo ON Transaccion(tipo);
+CREATE INDEX idx_transaccion_tipo ON Transaccion(id_tipo_transaccion);
+CREATE INDEX idx_transaccion_estado ON Transaccion(id_estado);
+
+-- Índices para Estado (tabla genérica)
+CREATE INDEX idx_estado_entidad ON Estado(entidad);
+CREATE INDEX idx_estado_codigo ON Estado(codigo);
 
 -- Índices para Cuota
 CREATE INDEX idx_cuota_partido ON Cuota(id_partido);
@@ -255,8 +415,9 @@ SELECT
     el.nombre AS equipo_local,
     ev.nombre AS equipo_visitante,
     p.fecha_hora,
-    p.estadio,
-    p.estado,
+    e.nombre AS estadio,
+    est.nombre AS estado,
+    arb.nombre || ' ' || arb.apellido AS arbitro,
     r.goles_local,
     r.goles_visitante,
     CASE 
@@ -269,10 +430,12 @@ JOIN Liga l ON p.id_liga = l.id_liga
 JOIN Deporte d ON l.id_deporte = d.id_deporte
 JOIN Equipo el ON p.id_equipo_local = el.id_equipo
 JOIN Equipo ev ON p.id_equipo_visitante = ev.id_equipo
+LEFT JOIN Estadio e ON p.id_estadio = e.id_estadio
+LEFT JOIN Estado est ON p.id_estado = est.id_estado
+LEFT JOIN Arbitro arb ON p.id_arbitro = arb.id_arbitro
 LEFT JOIN Resultado r ON p.id_partido = r.id_partido;
 
 -- Vista: Apuestas con información detallada
--- CORRECCIÓN: Usar u.nombre y u.apellido en lugar de ap.nombre y ap.apellido
 CREATE OR REPLACE VIEW vista_apuestas_detalladas AS
 SELECT 
     a.id_apuesta,
@@ -288,7 +451,7 @@ SELECT
     a.cuota_aplicada,
     a.ganancia_potencial,
     a.fecha_apuesta,
-    a.estado,
+    est.nombre AS estado,
     a.ganancia_real
 FROM Apuesta a
 JOIN Apostador ap ON a.id_apostador = ap.id_apostador
@@ -299,7 +462,35 @@ JOIN Partido p ON c.id_partido = p.id_partido
 JOIN Liga l ON p.id_liga = l.id_liga
 JOIN Deporte d ON l.id_deporte = d.id_deporte
 JOIN Equipo el ON p.id_equipo_local = el.id_equipo
-JOIN Equipo ev ON p.id_equipo_visitante = ev.id_equipo;
+JOIN Equipo ev ON p.id_equipo_visitante = ev.id_equipo
+LEFT JOIN Estado est ON a.id_estado = est.id_estado;
+
+-- Vista: Transacciones con información detallada
+CREATE OR REPLACE VIEW vista_transacciones_detalladas AS
+SELECT 
+    t.id_transaccion,
+    t.id_apostador,
+    u.username AS apostador,
+    u.nombre || ' ' || u.apellido AS nombre_completo,
+    tt.nombre AS tipo_transaccion,
+    tt.codigo AS tipo_codigo,
+    mp.nombre AS metodo_pago,
+    t.monto,
+    t.comision,
+    t.monto_neto,
+    t.fecha_transaccion,
+    est.nombre AS estado,
+    est.codigo AS estado_codigo,
+    t.referencia,
+    t.descripcion,
+    a.saldo_actual AS saldo_actual_apostador
+FROM Transaccion t
+JOIN Apostador a ON t.id_apostador = a.id_apostador
+JOIN Usuario u ON a.id_usuario = u.id_usuario
+JOIN TipoTransaccion tt ON t.id_tipo_transaccion = tt.id_tipo_transaccion
+JOIN Estado est ON t.id_estado = est.id_estado
+LEFT JOIN MetodoPago mp ON t.id_metodo_pago = mp.id_metodo_pago
+ORDER BY t.fecha_transaccion DESC;
 
 -- ============================================
 -- FUNCIONES Y TRIGGERS
@@ -308,13 +499,29 @@ JOIN Equipo ev ON p.id_equipo_visitante = ev.id_equipo;
 -- Función: Actualizar saldo del apostador después de transacción
 CREATE OR REPLACE FUNCTION actualizar_saldo_apostador()
 RETURNS TRIGGER AS $$
+DECLARE
+    estado_completada INTEGER;
+    afecta_saldo_tipo VARCHAR(20);
 BEGIN
-    IF NEW.estado = 'completada' THEN
-        IF NEW.tipo IN ('deposito', 'ganancia', 'reembolso') THEN
+    -- Obtener el ID del estado "completada" para transacciones
+    SELECT id_estado INTO estado_completada
+    FROM Estado
+    WHERE entidad = 'TRANSACCION' AND codigo = 'COMPLETADA'
+    LIMIT 1;
+    
+    -- Verificar si la transacción está completada
+    IF NEW.id_estado = estado_completada THEN
+        -- Obtener cómo afecta el saldo este tipo de transacción
+        SELECT afecta_saldo INTO afecta_saldo_tipo
+        FROM TipoTransaccion
+        WHERE id_tipo_transaccion = NEW.id_tipo_transaccion;
+        
+        -- Actualizar saldo según el tipo
+        IF afecta_saldo_tipo = 'suma' THEN
             UPDATE Apostador 
             SET saldo_actual = saldo_actual + NEW.monto_neto
             WHERE id_apostador = NEW.id_apostador;
-        ELSIF NEW.tipo IN ('retiro', 'apuesta') THEN
+        ELSIF afecta_saldo_tipo = 'resta' THEN
             UPDATE Apostador 
             SET saldo_actual = saldo_actual - NEW.monto_neto
             WHERE id_apostador = NEW.id_apostador;

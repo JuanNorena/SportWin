@@ -6,6 +6,20 @@ import { Apuesta, ApuestaDetallada, Cuota } from '../models';
  */
 export class ApuestaService {
     /**
+     * Obtener ID de estado por código
+     */
+    private static async getEstadoId(codigo: string, entidad: string = 'APUESTA'): Promise<number> {
+        const result = await db.query(
+            'SELECT id_estado FROM Estado WHERE codigo = $1 AND entidad = $2',
+            [codigo, entidad]
+        );
+        if (result.rows.length === 0) {
+            throw new Error(`Estado no encontrado: ${codigo}`);
+        }
+        return result.rows[0].id_estado;
+    }
+
+    /**
      * Crear nueva apuesta
      */
     public static async create(
@@ -26,13 +40,16 @@ export class ApuestaService {
 
             const cuota = cuotaResult.rows[0];
 
-            // Verificar que el partido no haya comenzado
+            // Verificar que el partido no haya comenzado (buscar estado PROGRAMADO)
             const partidoResult = await client.query(
-                'SELECT estado FROM Partido WHERE id_partido = $1',
+                `SELECT p.id_estado, e.codigo 
+                 FROM Partido p
+                 JOIN Estado e ON p.id_estado = e.id_estado
+                 WHERE p.id_partido = $1`,
                 [cuota.id_partido]
             );
 
-            if (partidoResult.rows[0]?.estado !== 'programado') {
+            if (partidoResult.rows[0]?.codigo !== 'PROGRAMADO') {
                 throw new Error('El partido ya no acepta apuestas');
             }
 
@@ -48,13 +65,21 @@ export class ApuestaService {
                 throw new Error('Saldo insuficiente');
             }
 
+            // Obtener ID del estado PENDIENTE para apuesta
+            const idEstadoPendiente = await this.getEstadoId('PENDIENTE', 'APUESTA');
+            const idEstadoCompletada = await this.getEstadoId('COMPLETADA', 'TRANSACCION');
+            const idTipoApuesta = await client.query(
+                'SELECT id_tipo_transaccion FROM TipoTransaccion WHERE codigo = $1',
+                ['APUESTA']
+            );
+
             // Crear la apuesta
             const apuestaResult = await client.query(
                 `INSERT INTO Apuesta 
-                 (id_apostador, id_cuota, monto_apostado, cuota_aplicada, ganancia_potencial, estado)
-                 VALUES ($1, $2, $3, $4, $5, 'pendiente')
+                 (id_apostador, id_cuota, monto_apostado, cuota_aplicada, ganancia_potencial, id_estado)
+                 VALUES ($1, $2, $3, $4, $5, $6)
                  RETURNING id_apuesta`,
-                [idApostador, idCuota, montoApostado, cuota.valor_cuota, montoApostado * cuota.valor_cuota]
+                [idApostador, idCuota, montoApostado, cuota.valor_cuota, montoApostado * cuota.valor_cuota, idEstadoPendiente]
             );
 
             const idApuesta = apuestaResult.rows[0].id_apuesta;
@@ -62,9 +87,9 @@ export class ApuestaService {
             // Registrar transacción de apuesta
             await client.query(
                 `INSERT INTO Transaccion 
-                 (id_apostador, id_apuesta, tipo, monto, comision, monto_neto, estado, descripcion)
-                 VALUES ($1, $2, 'apuesta', $3, 0, $3, 'completada', 'Apuesta realizada')`,
-                [idApostador, idApuesta, montoApostado]
+                 (id_apostador, id_apuesta, id_tipo_transaccion, monto, comision, monto_neto, id_estado, descripcion)
+                 VALUES ($1, $2, $3, $4, 0, $4, $5, 'Apuesta realizada')`,
+                [idApostador, idApuesta, idTipoApuesta.rows[0].id_tipo_transaccion, montoApostado, idEstadoCompletada]
             );
 
             return idApuesta;
@@ -120,10 +145,13 @@ export class ApuestaService {
     /**
      * Obtener apuestas por estado
      */
-    public static async getByEstado(estado: string): Promise<Apuesta[]> {
+    public static async getByEstado(codigoEstado: string): Promise<Apuesta[]> {
         const result = await db.query<Apuesta>(
-            'SELECT * FROM Apuesta WHERE estado = $1 ORDER BY fecha_apuesta DESC',
-            [estado]
+            `SELECT a.* FROM Apuesta a
+             JOIN Estado e ON a.id_estado = e.id_estado
+             WHERE e.codigo = $1 AND e.entidad = 'APUESTA'
+             ORDER BY a.fecha_apuesta DESC`,
+            [codigoEstado]
         );
         return result.rows;
     }
@@ -134,7 +162,7 @@ export class ApuestaService {
     public static async getPendientes(): Promise<ApuestaDetallada[]> {
         const result = await db.query<ApuestaDetallada>(
             `SELECT * FROM vista_apuestas_detalladas 
-             WHERE estado = 'pendiente'
+             WHERE estado = 'Pendiente'
              ORDER BY fecha_apuesta DESC`
         );
         return result.rows;
@@ -147,7 +175,9 @@ export class ApuestaService {
         return await db.transaction(async (client) => {
             // Obtener información de la apuesta
             const apuestaResult = await client.query<Apuesta>(
-                'SELECT * FROM Apuesta WHERE id_apuesta = $1 AND estado = \'pendiente\'',
+                `SELECT a.* FROM Apuesta a
+                 JOIN Estado e ON a.id_estado = e.id_estado
+                 WHERE a.id_apuesta = $1 AND e.codigo = 'PENDIENTE' AND e.entidad = 'APUESTA'`,
                 [id]
             );
 
@@ -156,24 +186,31 @@ export class ApuestaService {
             }
 
             const apuesta = apuestaResult.rows[0];
-            const nuevoEstado = ganada ? 'ganada' : 'perdida';
             const gananciaReal = ganada ? apuesta.ganancia_potencial : 0;
+            
+            // Obtener ID del estado correspondiente
+            const idEstado = await this.getEstadoId(ganada ? 'GANADA' : 'PERDIDA', 'APUESTA');
+            const idEstadoCompletada = await this.getEstadoId('COMPLETADA', 'TRANSACCION');
+            const idTipoGanancia = await client.query(
+                'SELECT id_tipo_transaccion FROM TipoTransaccion WHERE codigo = $1',
+                ['GANANCIA']
+            );
 
             // Actualizar apuesta
             await client.query(
                 `UPDATE Apuesta 
-                 SET estado = $1, ganancia_real = $2, fecha_resolucion = CURRENT_TIMESTAMP 
+                 SET id_estado = $1, ganancia_real = $2, fecha_resolucion = CURRENT_TIMESTAMP 
                  WHERE id_apuesta = $3`,
-                [nuevoEstado, gananciaReal, id]
+                [idEstado, gananciaReal, id]
             );
 
             // Si ganó, registrar transacción de ganancia
             if (ganada) {
                 await client.query(
                     `INSERT INTO Transaccion 
-                     (id_apostador, id_apuesta, tipo, monto, comision, monto_neto, estado, descripcion)
-                     VALUES ($1, $2, 'ganancia', $3, 0, $3, 'completada', 'Ganancia de apuesta')`,
-                    [apuesta.id_apostador, id, gananciaReal]
+                     (id_apostador, id_apuesta, id_tipo_transaccion, monto, comision, monto_neto, id_estado, descripcion)
+                     VALUES ($1, $2, $3, $4, 0, $4, $5, 'Ganancia de apuesta')`,
+                    [apuesta.id_apostador, id, idTipoGanancia.rows[0].id_tipo_transaccion, gananciaReal, idEstadoCompletada]
                 );
             }
 
@@ -188,7 +225,9 @@ export class ApuestaService {
         return await db.transaction(async (client) => {
             // Obtener información de la apuesta
             const apuestaResult = await client.query<Apuesta>(
-                'SELECT * FROM Apuesta WHERE id_apuesta = $1 AND estado = \'pendiente\'',
+                `SELECT a.* FROM Apuesta a
+                 JOIN Estado e ON a.id_estado = e.id_estado
+                 WHERE a.id_apuesta = $1 AND e.codigo = 'PENDIENTE' AND e.entidad = 'APUESTA'`,
                 [id]
             );
 
@@ -198,20 +237,28 @@ export class ApuestaService {
 
             const apuesta = apuestaResult.rows[0];
 
+            // Obtener IDs de estado
+            const idEstadoCancelada = await this.getEstadoId('CANCELADA', 'APUESTA');
+            const idEstadoCompletada = await this.getEstadoId('COMPLETADA', 'TRANSACCION');
+            const idTipoReembolso = await client.query(
+                'SELECT id_tipo_transaccion FROM TipoTransaccion WHERE codigo = $1',
+                ['REEMBOLSO']
+            );
+
             // Actualizar apuesta
             await client.query(
                 `UPDATE Apuesta 
-                 SET estado = 'cancelada', fecha_resolucion = CURRENT_TIMESTAMP 
-                 WHERE id_apuesta = $1`,
-                [id]
+                 SET id_estado = $1, fecha_resolucion = CURRENT_TIMESTAMP 
+                 WHERE id_apuesta = $2`,
+                [idEstadoCancelada, id]
             );
 
             // Registrar reembolso
             await client.query(
                 `INSERT INTO Transaccion 
-                 (id_apostador, id_apuesta, tipo, monto, comision, monto_neto, estado, descripcion)
-                 VALUES ($1, $2, 'reembolso', $3, 0, $3, 'completada', 'Reembolso de apuesta cancelada')`,
-                [apuesta.id_apostador, id, apuesta.monto_apostado]
+                 (id_apostador, id_apuesta, id_tipo_transaccion, monto, comision, monto_neto, id_estado, descripcion)
+                 VALUES ($1, $2, $3, $4, 0, $4, $5, 'Reembolso de apuesta cancelada')`,
+                [apuesta.id_apostador, id, idTipoReembolso.rows[0].id_tipo_transaccion, apuesta.monto_apostado, idEstadoCompletada]
             );
 
             return true;
@@ -225,14 +272,15 @@ export class ApuestaService {
         const result = await db.query(
             `SELECT 
                 COUNT(*) as total_apuestas,
-                COUNT(CASE WHEN estado = 'ganada' THEN 1 END) as apuestas_ganadas,
-                COUNT(CASE WHEN estado = 'perdida' THEN 1 END) as apuestas_perdidas,
-                COUNT(CASE WHEN estado = 'pendiente' THEN 1 END) as apuestas_pendientes,
-                SUM(monto_apostado) as total_apostado,
-                SUM(CASE WHEN estado = 'ganada' THEN ganancia_real ELSE 0 END) as total_ganado,
-                SUM(CASE WHEN estado = 'perdida' THEN monto_apostado ELSE 0 END) as total_perdido
-             FROM Apuesta
-             WHERE id_apostador = $1`,
+                COUNT(CASE WHEN e.codigo = 'GANADA' THEN 1 END) as apuestas_ganadas,
+                COUNT(CASE WHEN e.codigo = 'PERDIDA' THEN 1 END) as apuestas_perdidas,
+                COUNT(CASE WHEN e.codigo = 'PENDIENTE' THEN 1 END) as apuestas_pendientes,
+                SUM(a.monto_apostado) as total_apostado,
+                SUM(CASE WHEN e.codigo = 'GANADA' THEN a.ganancia_real ELSE 0 END) as total_ganado,
+                SUM(CASE WHEN e.codigo = 'PERDIDA' THEN a.monto_apostado ELSE 0 END) as total_perdido
+             FROM Apuesta a
+             JOIN Estado e ON a.id_estado = e.id_estado
+             WHERE a.id_apostador = $1 AND e.entidad = 'APUESTA'`,
             [idApostador]
         );
         return result.rows[0];

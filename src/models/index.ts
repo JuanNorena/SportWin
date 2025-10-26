@@ -2,6 +2,109 @@
  * Interfaces de los modelos de datos del sistema
  */
 
+// ============================================
+// TABLAS CATÁLOGO
+// ============================================
+
+export interface Pais {
+    id_pais: number;
+    nombre: string;
+    codigo_iso: string;
+    codigo_telefono?: string;
+    activo: boolean;
+}
+
+export interface Departamento {
+    id_departamento: number;
+    id_pais: number;
+    nombre: string;
+    codigo?: string;
+    activo: boolean;
+}
+
+export interface Ciudad {
+    id_ciudad: number;
+    id_departamento: number;
+    nombre: string;
+    codigo_postal?: string;
+    activo: boolean;
+}
+
+export interface Estado {
+    id_estado: number;
+    entidad: string;
+    nombre: string;
+    codigo: string;
+    descripcion?: string;
+    activo: boolean;
+}
+
+export interface Rol {
+    id_rol: number;
+    nombre: string;
+    descripcion?: string;
+    permisos?: string;
+    activo: boolean;
+}
+
+export interface TipoDocumento {
+    id_tipo_documento: number;
+    nombre: string;
+    codigo: string;
+    descripcion?: string;
+    activo: boolean;
+}
+
+export interface TipoTransaccion {
+    id_tipo_transaccion: number;
+    nombre: string;
+    codigo: string;
+    descripcion?: string;
+    afecta_saldo: 'suma' | 'resta' | 'neutro';
+    activo: boolean;
+}
+
+export interface Entrenador {
+    id_entrenador: number;
+    nombre: string;
+    apellido: string;
+    id_pais?: number;
+    fecha_nacimiento?: Date;
+    licencia?: string;
+    experiencia_años?: number;
+    foto_url?: string;
+    activo: boolean;
+}
+
+export interface Arbitro {
+    id_arbitro: number;
+    nombre: string;
+    apellido: string;
+    id_pais?: number;
+    fecha_nacimiento?: Date;
+    categoria?: string;
+    años_experiencia?: number;
+    foto_url?: string;
+    activo: boolean;
+}
+
+export interface Estadio {
+    id_estadio: number;
+    nombre: string;
+    id_ciudad?: number;
+    direccion?: string;
+    capacidad?: number;
+    año_construccion?: number;
+    tipo_cesped?: string;
+    techado: boolean;
+    foto_url?: string;
+    activo: boolean;
+}
+
+// ============================================
+// TABLAS PRINCIPALES
+// ============================================
+
 export interface Usuario {
     id_usuario: number;
     username: string;
@@ -9,7 +112,7 @@ export interface Usuario {
     nombre: string;
     apellido: string;
     email: string;
-    rol: 'admin' | 'operador' | 'apostador';
+    id_rol: number;
     fecha_creacion: Date;
     ultimo_acceso?: Date;
     activo: boolean;
@@ -19,11 +122,10 @@ export interface Apostador {
     id_apostador: number;
     id_usuario: number;
     documento: string;
-    tipo_documento: 'CC' | 'CE' | 'TI' | 'Pasaporte';
+    id_tipo_documento: number;
     telefono?: string;
     direccion?: string;
-    ciudad?: string;
-    pais: string;
+    id_ciudad?: number;
     fecha_nacimiento: Date;
     saldo_actual: number;
     fecha_registro: Date;
@@ -42,7 +144,7 @@ export interface Liga {
     id_liga: number;
     id_deporte: number;
     nombre: string;
-    pais?: string;
+    id_pais?: number;
     temporada?: string;
     fecha_inicio?: Date;
     fecha_fin?: Date;
@@ -53,11 +155,12 @@ export interface Equipo {
     id_equipo: number;
     id_liga: number;
     nombre: string;
-    pais?: string;
-    ciudad?: string;
-    estadio?: string;
-    entrenador?: string;
+    id_pais?: number;
+    id_ciudad?: number;
+    id_estadio?: number;
+    id_entrenador?: number;
     fundacion?: number;
+    logo_url?: string;
     activo: boolean;
 }
 
@@ -67,10 +170,10 @@ export interface Partido {
     id_equipo_local: number;
     id_equipo_visitante: number;
     fecha_hora: Date;
-    estadio?: string;
+    id_estadio?: number;
     jornada?: number;
-    estado: 'programado' | 'en_curso' | 'finalizado' | 'suspendido' | 'cancelado';
-    arbitro?: string;
+    id_estado: number;
+    id_arbitro?: number;
     asistencia?: number;
 }
 
@@ -79,20 +182,23 @@ export interface Resultado {
     id_partido: number;
     goles_local: number;
     goles_visitante: number;
+    puntos_local?: number;
+    puntos_visitante?: number;
     tarjetas_amarillas_local: number;
     tarjetas_amarillas_visitante: number;
     tarjetas_rojas_local: number;
     tarjetas_rojas_visitante: number;
-    corners_local: number;
-    corners_visitante: number;
-    fecha_actualizacion: Date;
+    corners_local?: number;
+    corners_visitante?: number;
+    fecha_actualizacion?: Date;
 }
 
 export interface TipoApuesta {
     id_tipo_apuesta: number;
+    codigo?: string;
     nombre: string;
     descripcion?: string;
-    categoria: 'resultado' | 'marcador' | 'jugador' | 'estadistica';
+    categoria?: string;
     activo: boolean;
 }
 
@@ -100,10 +206,11 @@ export interface Cuota {
     id_cuota: number;
     id_partido: number;
     id_tipo_apuesta: number;
-    descripcion: string;
+    descripcion?: string;
     valor_cuota: number;
     resultado_esperado?: string;
-    fecha_creacion: Date;
+    resultado_prediccion?: string;
+    fecha_creacion?: Date;
     fecha_cierre?: Date;
     activo: boolean;
 }
@@ -116,7 +223,7 @@ export interface Apuesta {
     cuota_aplicada: number;
     ganancia_potencial: number;
     fecha_apuesta: Date;
-    estado: 'pendiente' | 'ganada' | 'perdida' | 'cancelada' | 'reembolsada';
+    id_estado: number;
     fecha_resolucion?: Date;
     ganancia_real: number;
 }
@@ -126,21 +233,24 @@ export interface Transaccion {
     id_apostador: number;
     id_metodo_pago?: number;
     id_apuesta?: number;
-    tipo: 'deposito' | 'retiro' | 'apuesta' | 'ganancia' | 'reembolso';
+    id_tipo_transaccion: number;
     monto: number;
     comision: number;
     monto_neto: number;
     fecha_transaccion: Date;
-    estado: 'pendiente' | 'completada' | 'rechazada' | 'cancelada';
+    id_estado: number;
     referencia?: string;
     descripcion?: string;
 }
 
 export interface MetodoPago {
     id_metodo_pago: number;
+    codigo?: string;
     nombre: string;
     descripcion?: string;
-    comision: number;
+    comision?: number;
+    comision_porcentaje?: number;
+    tipo_operacion?: string;
     activo: boolean;
 }
 

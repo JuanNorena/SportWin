@@ -10,7 +10,7 @@ const pool = new Pool({
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '5432'),
     user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD,
+    password: String(process.env.DB_PASSWORD || 'sebas031800'),
     database: process.env.DB_NAME || 'SportWin',
     max: 20, // Máximo de conexiones
     idleTimeoutMillis: 30000,

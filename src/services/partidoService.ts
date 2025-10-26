@@ -11,7 +11,7 @@ export class PartidoService {
     public static async create(data: Partial<Partido>): Promise<number> {
         const result = await db.query(
             `INSERT INTO Partido 
-             (id_liga, id_equipo_local, id_equipo_visitante, fecha_hora, estadio, jornada, estado, arbitro, asistencia)
+             (id_liga, id_equipo_local, id_equipo_visitante, fecha_hora, id_estadio, jornada, id_estado, id_arbitro, asistencia)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
              RETURNING id_partido`,
             [
@@ -19,10 +19,10 @@ export class PartidoService {
                 data.id_equipo_local,
                 data.id_equipo_visitante,
                 data.fecha_hora,
-                data.estadio,
+                data.id_estadio,
                 data.jornada,
-                data.estado || 'programado',
-                data.arbitro,
+                data.id_estado,
+                data.id_arbitro,
                 data.asistencia
             ]
         );
@@ -111,10 +111,10 @@ export class PartidoService {
     /**
      * Actualizar estado del partido
      */
-    public static async updateEstado(id: number, estado: string): Promise<boolean> {
+    public static async updateEstado(id: number, idEstado: number): Promise<boolean> {
         const result = await db.query(
-            'UPDATE Partido SET estado = $1 WHERE id_partido = $2',
-            [estado, id]
+            'UPDATE Partido SET id_estado = $1 WHERE id_partido = $2',
+            [idEstado, id]
         );
         return (result.rowCount ?? 0) > 0;
     }
@@ -131,17 +131,17 @@ export class PartidoService {
             fields.push(`fecha_hora = $${paramIndex++}`);
             values.push(data.fecha_hora);
         }
-        if (data.estadio !== undefined) {
-            fields.push(`estadio = $${paramIndex++}`);
-            values.push(data.estadio);
+        if (data.id_estadio !== undefined) {
+            fields.push(`id_estadio = $${paramIndex++}`);
+            values.push(data.id_estadio);
         }
-        if (data.estado !== undefined) {
-            fields.push(`estado = $${paramIndex++}`);
-            values.push(data.estado);
+        if (data.id_estado !== undefined) {
+            fields.push(`id_estado = $${paramIndex++}`);
+            values.push(data.id_estado);
         }
-        if (data.arbitro !== undefined) {
-            fields.push(`arbitro = $${paramIndex++}`);
-            values.push(data.arbitro);
+        if (data.id_arbitro !== undefined) {
+            fields.push(`id_arbitro = $${paramIndex++}`);
+            values.push(data.id_arbitro);
         }
         if (data.asistencia !== undefined) {
             fields.push(`asistencia = $${paramIndex++}`);
