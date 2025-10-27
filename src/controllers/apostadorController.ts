@@ -21,6 +21,7 @@ export class ApostadorController {
                 'Crear Apostador',
                 'Actualizar Apostador',
                 'Ver Saldo',
+                'Eliminar Apostador',
                 'Volver'
             ];
 
@@ -44,6 +45,9 @@ export class ApostadorController {
                         await this.verSaldo();
                         break;
                     case 6:
+                        await this.eliminar();
+                        break;
+                    case 7:
                         back = true;
                         break;
                 }
@@ -65,12 +69,15 @@ export class ApostadorController {
             `SELECT 
                 a.id_apostador,
                 a.documento,
+                u.nombre,
+                u.apellido,
                 c.nombre as ciudad,
                 a.saldo_actual,
                 a.verificado
              FROM Apostador a
+             LEFT JOIN Usuario u ON a.id_usuario = u.id_usuario
              LEFT JOIN Ciudad c ON a.id_ciudad = c.id_ciudad
-             ORDER BY a.fecha_registro DESC`
+             ORDER BY a.id_apostador ASC`
         );
 
         if (result.rows.length === 0) {
@@ -78,13 +85,15 @@ export class ApostadorController {
         } else {
             const data = result.rows.map((a: any) => ({
                 id: a.id_apostador,
+                nombre: a.nombre || 'N/A',
+                apellido: a.apellido || 'N/A',
                 documento: a.documento,
                 ciudad: a.ciudad || 'N/A',
                 saldo: ConsoleUtils.formatCurrency(a.saldo_actual),
                 verificado: a.verificado ? 'Sí' : 'No'
             }));
 
-            ConsoleUtils.showTable(data, ['ID', 'Documento', 'Ciudad', 'Saldo', 'Verificado']);
+            ConsoleUtils.showTable(data, ['ID', 'Nombre', 'Apellido', 'Documento', 'Ciudad', 'Saldo', 'Verificado']);
         }
 
         ConsoleUtils.pause();
@@ -102,11 +111,15 @@ export class ApostadorController {
         const result = await db.query(
             `SELECT 
                 a.*,
+                u.nombre,
+                u.apellido,
+                u.email,
                 td.nombre as tipo_documento_nombre,
                 c.nombre as ciudad_nombre,
                 d.nombre as departamento,
                 p.nombre as pais
              FROM Apostador a
+             LEFT JOIN Usuario u ON a.id_usuario = u.id_usuario
              LEFT JOIN TipoDocumento td ON a.id_tipo_documento = td.id_tipo_documento
              LEFT JOIN Ciudad c ON a.id_ciudad = c.id_ciudad
              LEFT JOIN Departamento d ON c.id_departamento = d.id_departamento
@@ -117,10 +130,25 @@ export class ApostadorController {
 
         if (result.rows.length === 0) {
             ConsoleUtils.error('Apostador no encontrado');
+            
+            // Mostrar documentos disponibles como sugerencia
+            const allDocs = await db.query(
+                'SELECT documento FROM Apostador ORDER BY id_apostador LIMIT 10'
+            );
+            
+            if (allDocs.rows.length > 0) {
+                console.log();
+                ConsoleUtils.info('Documentos disponibles (primeros 10):');
+                allDocs.rows.forEach((row: any) => {
+                    console.log(`  - ${row.documento}`);
+                });
+            }
         } else {
             const apostador = result.rows[0];
             console.log();
             ConsoleUtils.info(`ID: ${apostador.id_apostador}`);
+            ConsoleUtils.info(`Nombre: ${apostador.nombre || 'N/A'} ${apostador.apellido || ''}`);
+            ConsoleUtils.info(`Email: ${apostador.email || 'N/A'}`);
             ConsoleUtils.info(`Documento: ${apostador.documento} (${apostador.tipo_documento_nombre || 'N/A'})`);
             ConsoleUtils.info(`Teléfono: ${apostador.telefono || 'N/A'}`);
             ConsoleUtils.info(`Ciudad: ${apostador.ciudad_nombre || 'N/A'}${apostador.departamento ? ', ' + apostador.departamento : ''}`);
@@ -203,7 +231,27 @@ export class ApostadorController {
             return;
         }
 
+        ConsoleUtils.info('\nDatos actuales:');
+        ConsoleUtils.info(`Documento: ${apostador.documento}`);
+        ConsoleUtils.info(`Teléfono: ${apostador.telefono || 'N/A'}`);
+        ConsoleUtils.info(`Dirección: ${apostador.direccion || 'N/A'}`);
+        console.log();
         ConsoleUtils.info('Deje en blanco para mantener el valor actual');
+        
+        const documento = ConsoleUtils.input('Nuevo documento', false);
+        
+        // Opción para cambiar tipo de documento
+        let idTipoDocumento = apostador.id_tipo_documento;
+        const cambiarTipoDoc = ConsoleUtils.input('¿Cambiar tipo de documento? (s/n)', false);
+        
+        if (cambiarTipoDoc?.toLowerCase() === 's') {
+            const tiposDoc = await TipoDocumentoService.getAll();
+            ConsoleUtils.info('\nTipos de documento disponibles:');
+            tiposDoc.forEach(td => console.log(`  - ID ${td.id_tipo_documento}: ${td.codigo} - ${td.nombre}`));
+            
+            const idTipoDocStr = ConsoleUtils.input('Nuevo ID de Tipo de Documento');
+            idTipoDocumento = parseInt(idTipoDocStr);
+        }
         
         const telefono = ConsoleUtils.input('Nuevo teléfono', false);
         const direccion = ConsoleUtils.input('Nueva dirección', false);
@@ -222,6 +270,8 @@ export class ApostadorController {
         }
 
         const updated = await ApostadorService.update(id, {
+            documento: documento || apostador.documento,
+            id_tipo_documento: idTipoDocumento,
             telefono: telefono || apostador.telefono,
             direccion: direccion || apostador.direccion,
             id_ciudad: idCiudad
@@ -246,6 +296,43 @@ export class ApostadorController {
         const saldo = await ApostadorService.getSaldo(id);
 
         ConsoleUtils.success(`Saldo actual: ${ConsoleUtils.formatCurrency(saldo)}`);
+        ConsoleUtils.pause();
+    }
+
+    /**
+     * Eliminar apostador
+     */
+    private static async eliminar(): Promise<void> {
+        ConsoleUtils.showHeader('Eliminar Apostador');
+
+        const id = ConsoleUtils.inputNumber('ID del apostador a eliminar');
+
+        // Obtener datos básicos del apostador antes de eliminar
+        const apostador = await ApostadorService.getById(id);
+
+        if (!apostador) {
+            ConsoleUtils.error('Apostador no encontrado');
+            ConsoleUtils.pause();
+            return;
+        }
+
+        ConsoleUtils.info(`Apostador encontrado: ID ${apostador.id_apostador} - Documento: ${apostador.documento}`);
+        const confirmar = ConsoleUtils.confirm('¿Está seguro que desea eliminar este apostador');
+
+        if (!confirmar) {
+            ConsoleUtils.info('Operación cancelada');
+            ConsoleUtils.pause();
+            return;
+        }
+
+        const deleted = await ApostadorService.delete(id);
+
+        if (deleted) {
+            ConsoleUtils.success('Apostador eliminado correctamente');
+        } else {
+            ConsoleUtils.error('No se pudo eliminar el apostador');
+        }
+
         ConsoleUtils.pause();
     }
 }

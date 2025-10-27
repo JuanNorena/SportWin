@@ -79,6 +79,14 @@ export class ApostadorService {
         const values: any[] = [];
         let paramIndex = 1;
 
+        if (data.documento !== undefined) {
+            fields.push(`documento = $${paramIndex++}`);
+            values.push(data.documento);
+        }
+        if (data.id_tipo_documento !== undefined) {
+            fields.push(`id_tipo_documento = $${paramIndex++}`);
+            values.push(data.id_tipo_documento);
+        }
         if (data.telefono !== undefined) {
             fields.push(`telefono = $${paramIndex++}`);
             values.push(data.telefono);

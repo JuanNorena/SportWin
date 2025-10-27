@@ -130,11 +130,11 @@ export class CatalogoController {
             const data = paises.map(p => ({
                 id: p.id_pais,
                 nombre: p.nombre,
-                codigo: p.codigo_iso,
-                telefono: p.codigo_telefono || 'N/A'
+                código_iso: p.codigo_iso,
+                código_tel: p.codigo_telefono || 'N/A'
             }));
 
-            ConsoleUtils.showTable(data, ['ID', 'Nombre', 'Código ISO', 'Código Tel.']);
+            ConsoleUtils.showTable(data, ['ID', 'Nombre', 'Código ISO', 'Código Tel']);
         }
 
         ConsoleUtils.pause();
@@ -223,8 +223,8 @@ export class CatalogoController {
             const data = departamentos.slice(0, 50).map(d => ({
                 id: d.id_departamento,
                 nombre: d.nombre,
-                codigo: d.codigo || 'N/A',
-                id_pais: d.id_pais
+                código: d.codigo || 'N/A',
+                id_país: d.id_pais
             }));
 
             ConsoleUtils.showTable(data, ['ID', 'Nombre', 'Código', 'ID País']);
@@ -254,7 +254,7 @@ export class CatalogoController {
             const data = departamentos.map(d => ({
                 id: d.id_departamento,
                 nombre: d.nombre,
-                codigo: d.codigo || 'N/A'
+                código: d.codigo || 'N/A'
             }));
 
             ConsoleUtils.showTable(data, ['ID', 'Nombre', 'Código']);
@@ -746,7 +746,7 @@ export class CatalogoController {
             const data = entrenadores.map(e => ({
                 id: e.id_entrenador,
                 nombre: `${e.nombre} ${e.apellido}`,
-                pais: e.pais || 'N/A',
+                país: e.pais || 'N/A',
                 licencia: e.licencia || 'N/A',
                 experiencia: e.experiencia_años ? `${e.experiencia_años} años` : 'N/A'
             }));
