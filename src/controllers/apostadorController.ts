@@ -71,6 +71,7 @@ export class ApostadorController {
                 a.documento,
                 u.nombre,
                 u.apellido,
+                u.username,
                 c.nombre as ciudad,
                 a.saldo_actual,
                 a.verificado
@@ -87,13 +88,18 @@ export class ApostadorController {
                 id: a.id_apostador,
                 nombre: a.nombre || 'N/A',
                 apellido: a.apellido || 'N/A',
+                usuario: a.username || 'N/A',
                 documento: a.documento,
                 ciudad: a.ciudad || 'N/A',
                 saldo: ConsoleUtils.formatCurrency(a.saldo_actual),
                 verificado: a.verificado ? 'Sí' : 'No'
             }));
 
-            ConsoleUtils.showTable(data, ['ID', 'Nombre', 'Apellido', 'Documento', 'Ciudad', 'Saldo', 'Verificado']);
+            ConsoleUtils.showTable(data, ['ID', 'Nombre', 'Apellido', 'Usuario', 'Documento', 'Ciudad', 'Saldo', 'Verificado']);
+            
+            console.log();
+            ConsoleUtils.warning('Nota: Las contraseñas están hasheadas por seguridad y no se pueden mostrar.');
+            ConsoleUtils.info('Para credenciales de prueba, consulta el archivo CREDENCIALES.md o database/03_fix_passwords.sql');
         }
 
         ConsoleUtils.pause();
