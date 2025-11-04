@@ -22,7 +22,7 @@ export class LigaController {
                 'Buscar liga por ID',
                 'Crear nueva liga',
                 'Actualizar liga',
-                'Desactivar liga',
+                'Eliminar liga',
                 'Volver'
             ];
 
@@ -49,7 +49,7 @@ export class LigaController {
                         await this.actualizar();
                         break;
                     case 7:
-                        await this.desactivar();
+                        await this.eliminar();
                         break;
                     case 8:
                         exit = true;
@@ -210,24 +210,50 @@ export class LigaController {
     }
 
     /**
-     * Desactivar liga
+     * Eliminar liga
      */
-    private static async desactivar(): Promise<void> {
-        const ligas = await LigaService.getAll();
-        ConsoleUtils.showTable(ligas, ['id_liga', 'nombre', 'activo']);
+    private static async eliminar(): Promise<void> {
+        ConsoleUtils.showHeader('Eliminar Liga');
         
-        const id = parseInt(ConsoleUtils.input('ID de la liga a desactivar'));
+        const ligas = await LigaService.getAllCompletas();
         
-        const confirm = ConsoleUtils.confirm('¿Está seguro de desactivar esta liga?');
+        if (ligas.length === 0) {
+            ConsoleUtils.warning('No hay ligas registradas');
+            ConsoleUtils.pause();
+            return;
+        }
+        
+        const data = ligas.map(l => ({
+            id: l.id_liga,
+            nombre: l.nombre,
+            deporte: l.deporte_nombre || 'N/A',
+            país: l.pais_nombre || 'N/A',
+            temporada: l.temporada || 'N/A'
+        }));
+        ConsoleUtils.showTable(data, ['ID', 'Nombre', 'Deporte', 'País', 'Temporada']);
+        
+        const id = ConsoleUtils.inputNumber('ID de la liga a eliminar');
+        
+        const liga = await LigaService.getById(id);
+        if (!liga) {
+            ConsoleUtils.error('Liga no encontrada');
+            ConsoleUtils.pause();
+            return;
+        }
+        
+        ConsoleUtils.info(`Liga: ${liga.nombre}`);
+        const confirm = ConsoleUtils.confirm('¿Está seguro de eliminar esta liga? Esta acción no se puede deshacer');
         
         if (confirm) {
-            const success = await LigaService.desactivar(id);
+            const success = await LigaService.delete(id);
             
             if (success) {
-                ConsoleUtils.success('Liga desactivada exitosamente');
+                ConsoleUtils.success('Liga eliminada exitosamente');
             } else {
-                ConsoleUtils.error('No se pudo desactivar la liga');
+                ConsoleUtils.error('No se pudo eliminar la liga. Puede tener equipos o partidos relacionados');
             }
+        } else {
+            ConsoleUtils.info('Operación cancelada');
         }
         
         ConsoleUtils.pause();

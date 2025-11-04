@@ -6,6 +6,9 @@ import { ApuestaController } from './apuestaController';
 import { TransaccionController } from './transaccionController';
 import { ReportController } from './reportController';
 import { CatalogoController } from './catalogoController';
+import { DeporteController } from './deporteController';
+import { LigaController } from './ligaController';
+import { EquipoController } from './equipoController';
 import { TipoDocumentoService, CiudadService } from '../services/catalogoService';
 import db from '../utils/database';
 
@@ -279,6 +282,9 @@ export class MainController {
 
             const options = [
                 'Gestión de Apostadores',
+                'Gestión de Deportes',
+                'Gestión de Ligas',
+                'Gestión de Equipos',
                 'Gestión de Partidos',
                 'Gestión de Apuestas',
                 'Transacciones',
@@ -295,27 +301,36 @@ export class MainController {
                     await ApostadorController.menu();
                     break;
                 case 2:
-                    await PartidoController.menu();
+                    await DeporteController.menu();
                     break;
                 case 3:
-                    await ApuestaController.menu();
+                    await LigaController.menu();
                     break;
                 case 4:
-                    await TransaccionController.menu();
+                    await EquipoController.menu();
                     break;
                 case 5:
-                    await ReportController.menu();
+                    await PartidoController.menu();
                     break;
                 case 6:
-                    await CatalogoController.menu();
+                    await ApuestaController.menu();
                     break;
                 case 7:
+                    await TransaccionController.menu();
+                    break;
+                case 8:
+                    await ReportController.menu();
+                    break;
+                case 9:
+                    await CatalogoController.menu();
+                    break;
+                case 10:
                     AuthService.logout();
                     ConsoleUtils.success('Sesión cerrada');
                     ConsoleUtils.pause();
                     await this.start();
                     return;
-                case 8:
+                case 11:
                     exit = true;
                     break;
             }

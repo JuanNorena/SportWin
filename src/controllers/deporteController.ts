@@ -18,7 +18,7 @@ export class DeporteController {
                 'Buscar deporte por ID',
                 'Crear nuevo deporte',
                 'Actualizar deporte',
-                'Desactivar deporte',
+                'Eliminar deporte',
                 'Volver'
             ];
 
@@ -39,7 +39,7 @@ export class DeporteController {
                         await this.actualizar();
                         break;
                     case 5:
-                        await this.desactivar();
+                        await this.eliminar();
                         break;
                     case 6:
                         exit = true;
@@ -147,24 +147,48 @@ export class DeporteController {
     }
 
     /**
-     * Desactivar deporte
+     * Eliminar deporte
      */
-    private static async desactivar(): Promise<void> {
+    private static async eliminar(): Promise<void> {
+        ConsoleUtils.showHeader('Eliminar Deporte');
+        
         const deportes = await DeporteService.getAll();
-        ConsoleUtils.showTable(deportes, ['id_deporte', 'nombre', 'activo']);
         
-        const id = parseInt(ConsoleUtils.input('ID del deporte a desactivar'));
+        if (deportes.length === 0) {
+            ConsoleUtils.warning('No hay deportes registrados');
+            ConsoleUtils.pause();
+            return;
+        }
         
-        const confirm = ConsoleUtils.confirm('¿Está seguro de desactivar este deporte?');
+        const data = deportes.map(d => ({
+            id: d.id_deporte,
+            nombre: d.nombre,
+            descripcion: d.descripcion || 'N/A'
+        }));
+        ConsoleUtils.showTable(data, ['ID', 'Nombre', 'Descripción']);
+        
+        const id = ConsoleUtils.inputNumber('ID del deporte a eliminar');
+        
+        const deporte = await DeporteService.getById(id);
+        if (!deporte) {
+            ConsoleUtils.error('Deporte no encontrado');
+            ConsoleUtils.pause();
+            return;
+        }
+        
+        ConsoleUtils.info(`Deporte: ${deporte.nombre}`);
+        const confirm = ConsoleUtils.confirm('¿Está seguro de eliminar este deporte? Esta acción no se puede deshacer');
         
         if (confirm) {
-            const success = await DeporteService.desactivar(id);
+            const success = await DeporteService.delete(id);
             
             if (success) {
-                ConsoleUtils.success('Deporte desactivado exitosamente');
+                ConsoleUtils.success('Deporte eliminado exitosamente');
             } else {
-                ConsoleUtils.error('No se pudo desactivar el deporte');
+                ConsoleUtils.error('No se pudo eliminar el deporte. Puede tener registros relacionados');
             }
+        } else {
+            ConsoleUtils.info('Operación cancelada');
         }
         
         ConsoleUtils.pause();

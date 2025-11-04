@@ -19,7 +19,7 @@ export class EquipoController {
                 'Buscar por ID',
                 'Crear nuevo equipo',
                 'Actualizar equipo',
-                'Desactivar equipo',
+                'Eliminar equipo',
                 'Volver'
             ];
 
@@ -46,7 +46,7 @@ export class EquipoController {
                         await this.actualizar();
                         break;
                     case 7:
-                        await this.desactivar();
+                        await this.eliminar();
                         break;
                     case 8:
                         exit = true;
@@ -173,20 +173,51 @@ export class EquipoController {
         ConsoleUtils.pause();
     }
 
-    private static async desactivar(): Promise<void> {
-        const equipos = await EquipoService.getAll();
-        ConsoleUtils.showTable(equipos, ['id_equipo', 'nombre', 'activo']);
+    /**
+     * Eliminar equipo
+     */
+    private static async eliminar(): Promise<void> {
+        ConsoleUtils.showHeader('Eliminar Equipo');
         
-        const id = parseInt(ConsoleUtils.input('ID del equipo a desactivar'));
+        const equipos = await EquipoService.getAllCompletos();
         
-        if (ConsoleUtils.confirm('¿Está seguro de desactivar este equipo?')) {
-            const success = await EquipoService.desactivar(id);
+        if (equipos.length === 0) {
+            ConsoleUtils.warning('No hay equipos registrados');
+            ConsoleUtils.pause();
+            return;
+        }
+        
+        const data = equipos.map(e => ({
+            id: e.id_equipo,
+            nombre: e.nombre,
+            liga: e.liga_nombre || 'N/A',
+            país: e.pais_nombre || 'N/A',
+            ciudad: e.ciudad_nombre || 'N/A'
+        }));
+        ConsoleUtils.showTable(data, ['ID', 'Nombre', 'Liga', 'País', 'Ciudad']);
+        
+        const id = ConsoleUtils.inputNumber('ID del equipo a eliminar');
+        
+        const equipo = await EquipoService.getById(id);
+        if (!equipo) {
+            ConsoleUtils.error('Equipo no encontrado');
+            ConsoleUtils.pause();
+            return;
+        }
+        
+        ConsoleUtils.info(`Equipo: ${equipo.nombre}`);
+        const confirm = ConsoleUtils.confirm('¿Está seguro de eliminar este equipo? Esta acción no se puede deshacer');
+        
+        if (confirm) {
+            const success = await EquipoService.delete(id);
             
             if (success) {
-                ConsoleUtils.success('Equipo desactivado exitosamente');
+                ConsoleUtils.success('Equipo eliminado exitosamente');
             } else {
-                ConsoleUtils.error('No se pudo desactivar el equipo');
+                ConsoleUtils.error('No se pudo eliminar el equipo. Puede tener partidos relacionados');
             }
+        } else {
+            ConsoleUtils.info('Operación cancelada');
         }
         
         ConsoleUtils.pause();
