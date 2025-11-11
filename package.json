@@ -8,7 +8,9 @@
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "db:setup": "psql -h localhost -p 5432 -U postgres -d SportWin -f database/01_schema.sql",
-    "db:seed": "psql -h localhost -p 5432 -U postgres -d SportWin -f database/02_seed.sql"
+    "db:seed": "psql -h localhost -p 5432 -U postgres -d SportWin -f database/02_seed.sql",
+    "db:seed:new": "psql -h localhost -p 5432 -U postgres -d SportWin -f database/02_seed_new.sql",
+    "db:recreate": "psql -h localhost -p 5432 -U postgres -d postgres -c \"DROP DATABASE IF EXISTS \\\"SportWin\\\"; CREATE DATABASE \\\"SportWin\\\" WITH ENCODING 'UTF8' OWNER postgres;\" && psql -h localhost -p 5432 -U postgres -d SportWin -f database/01_schema.sql"
   },
   "keywords": ["apuestas", "deportes", "typescript", "postgresql"],
   "author": "",
