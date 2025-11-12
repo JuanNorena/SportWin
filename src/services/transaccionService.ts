@@ -42,14 +42,31 @@ export class TransaccionService {
         monto: number,
         referencia?: string
     ): Promise<number> {
+        console.log('🔍 createDeposito - Parámetros recibidos:', {
+            idApostador,
+            idMetodoPago,
+            idMetodoPago_type: typeof idMetodoPago,
+            monto,
+            referencia
+        });
+
         return await db.transaction(async (client) => {
             // Obtener comisión del método de pago
+            console.log('🔍 Consultando método de pago con ID:', idMetodoPago);
             const metodoPagoResult = await client.query(
                 'SELECT comision FROM MetodoPago WHERE id_metodo_pago = $1 AND activo = true',
                 [idMetodoPago]
             );
 
+            console.log('🔍 Resultado de consulta de método de pago:', {
+                rowCount: metodoPagoResult.rows.length,
+                rows: metodoPagoResult.rows
+            });
+
             if (metodoPagoResult.rows.length === 0) {
+                // Consultar todos los métodos de pago para debugging
+                const allMetodos = await client.query('SELECT * FROM MetodoPago');
+                console.log('❌ Todos los métodos de pago en BD:', allMetodos.rows);
                 throw new Error('Método de pago no válido');
             }
 
@@ -68,6 +85,20 @@ export class TransaccionService {
                  RETURNING id_transaccion`,
                 [idApostador, idMetodoPago, idTipoDeposito, monto, comision, montoNeto, idEstadoCompletada, referencia]
             );
+
+            // ✅ ACTUALIZAR EL SALDO DEL APOSTADOR
+            await client.query(
+                'UPDATE Apostador SET saldo_actual = saldo_actual + $1 WHERE id_apostador = $2',
+                [montoNeto, idApostador]
+            );
+
+            console.log('✅ Depósito completado:', {
+                id_transaccion: result.rows[0].id_transaccion,
+                monto,
+                comision,
+                montoNeto,
+                id_apostador: idApostador
+            });
 
             return result.rows[0].id_transaccion;
         });
@@ -120,6 +151,21 @@ export class TransaccionService {
                  RETURNING id_transaccion`,
                 [idApostador, idMetodoPago, idTipoRetiro, monto, comision, montoNeto, idEstadoCompletada, referencia]
             );
+
+            // ✅ ACTUALIZAR EL SALDO DEL APOSTADOR (restar el monto neto que incluye comisión)
+            await client.query(
+                'UPDATE Apostador SET saldo_actual = saldo_actual - $1 WHERE id_apostador = $2',
+                [montoNeto, idApostador]
+            );
+
+            console.log('✅ Retiro completado:', {
+                id_transaccion: result.rows[0].id_transaccion,
+                monto,
+                comision,
+                montoNeto,
+                saldoAnterior: saldoActual,
+                id_apostador: idApostador
+            });
 
             return result.rows[0].id_transaccion;
         });

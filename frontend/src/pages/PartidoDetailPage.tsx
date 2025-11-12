@@ -7,7 +7,7 @@ import type { PartidoCompleto, CuotaDetallada } from '../types';
 export const PartidoDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { apostador, isAuthenticated } = useAuth();
+  const { apostador, isAuthenticated, refreshSaldo } = useAuth();
   
   const [partido, setPartido] = useState<PartidoCompleto | null>(null);
   const [cuotas, setCuotas] = useState<CuotaDetallada[]>([]);
@@ -94,6 +94,9 @@ export const PartidoDetailPage: React.FC = () => {
       setMontoApuesta('');
       setSelectedCuota(null);
       
+      // Actualizar el saldo del apostador
+      await refreshSaldo();
+      
       // Redirigir a mis apuestas después de 2 segundos
       setTimeout(() => {
         navigate('/apuestas');
@@ -122,11 +125,17 @@ export const PartidoDetailPage: React.FC = () => {
     }).format(amount);
   };
 
+  const getCuotaValue = (cuota: CuotaDetallada): number => {
+    return typeof cuota.valor_cuota === 'string' 
+      ? parseFloat(cuota.valor_cuota) 
+      : cuota.valor_cuota;
+  };
+
   const calcularGanancia = () => {
     if (!selectedCuota || !montoApuesta) return 0;
     const monto = parseFloat(montoApuesta);
     if (isNaN(monto)) return 0;
-    return monto * selectedCuota.valor_cuota;
+    return monto * getCuotaValue(selectedCuota);
   };
 
   // Agrupar cuotas por tipo
@@ -252,7 +261,7 @@ export const PartidoDetailPage: React.FC = () => {
                       {cuota.resultado_esperado && (
                         <p className="text-xs mb-2 opacity-75">{cuota.resultado_esperado}</p>
                       )}
-                      <p className="text-2xl font-bold">{cuota.valor_cuota.toFixed(2)}</p>
+                      <p className="text-2xl font-bold">{getCuotaValue(cuota).toFixed(2)}</p>
                     </button>
                   ))}
                 </div>
@@ -272,7 +281,7 @@ export const PartidoDetailPage: React.FC = () => {
               <p className="text-sm text-gray-600 mb-1">Cuota Seleccionada</p>
               <p className="font-bold">{selectedCuota.tipo_apuesta}</p>
               <p className="text-sm text-gray-600">{selectedCuota.descripcion}</p>
-              <p className="text-2xl font-bold mt-2">{selectedCuota.valor_cuota.toFixed(2)}</p>
+              <p className="text-2xl font-bold mt-2">{getCuotaValue(selectedCuota).toFixed(2)}</p>
             </div>
 
             <div>
@@ -307,7 +316,7 @@ export const PartidoDetailPage: React.FC = () => {
                   {formatCurrency(calcularGanancia())}
                 </p>
                 <p className="text-xs text-gray-600 mt-2">
-                  = {montoApuesta} × {selectedCuota.valor_cuota.toFixed(2)}
+                  = {montoApuesta} × {getCuotaValue(selectedCuota).toFixed(2)}
                 </p>
               </div>
             )}

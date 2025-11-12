@@ -22,4 +22,23 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 });
 
+/**
+ * GET /api/apostadores/:id/saldo
+ * Obtener solo el saldo actual de un apostador
+ */
+router.get('/:id/saldo', async (req: Request, res: Response) => {
+    try {
+        const apostador = await ApostadorService.getById(parseInt(req.params.id));
+        if (!apostador) {
+            return res.status(404).json({ error: 'Apostador no encontrado' });
+        }
+        res.json({ 
+            id_apostador: apostador.id_apostador,
+            saldo_actual: apostador.saldo_actual 
+        });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;

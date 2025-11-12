@@ -72,24 +72,24 @@ export class PartidoService {
     }
 
     /**
-     * Obtener partidos programados
+     * Obtener partidos programados (futuros)
      */
     public static async getProgramados(): Promise<PartidoCompleto[]> {
         const result = await db.query<PartidoCompleto>(
             `SELECT * FROM vista_partidos_completos 
-             WHERE estado = 'programado' AND fecha_hora > CURRENT_TIMESTAMP
+             WHERE fecha_hora > CURRENT_TIMESTAMP
              ORDER BY fecha_hora`
         );
         return result.rows;
     }
 
     /**
-     * Obtener partidos finalizados
+     * Obtener partidos finalizados (pasados)
      */
     public static async getFinalizados(limit: number = 50): Promise<PartidoCompleto[]> {
         const result = await db.query<PartidoCompleto>(
             `SELECT * FROM vista_partidos_completos 
-             WHERE estado = 'finalizado'
+             WHERE fecha_hora <= CURRENT_TIMESTAMP
              ORDER BY fecha_hora DESC
              LIMIT $1`,
             [limit]

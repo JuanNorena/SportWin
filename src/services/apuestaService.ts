@@ -92,6 +92,20 @@ export class ApuestaService {
                 [idApostador, idApuesta, idTipoApuesta.rows[0].id_tipo_transaccion, montoApostado, idEstadoCompletada]
             );
 
+            // ✅ ACTUALIZAR EL SALDO DEL APOSTADOR (restar el monto apostado)
+            await client.query(
+                'UPDATE Apostador SET saldo_actual = saldo_actual - $1 WHERE id_apostador = $2',
+                [montoApostado, idApostador]
+            );
+
+            console.log('✅ Apuesta creada:', {
+                id_apuesta: idApuesta,
+                id_apostador: idApostador,
+                monto_apostado: montoApostado,
+                cuota_aplicada: cuota.valor_cuota,
+                ganancia_potencial: montoApostado * cuota.valor_cuota
+            });
+
             return idApuesta;
         });
     }

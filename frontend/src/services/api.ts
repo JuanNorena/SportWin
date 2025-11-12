@@ -76,6 +76,13 @@ class ApiService {
     return response.data;
   }
 
+  async getApostadorSaldo(id: number): Promise<{ id_apostador: number; saldo_actual: number }> {
+    const response = await this.api.get<{ id_apostador: number; saldo_actual: number }>(
+      `/apostadores/${id}/saldo`
+    );
+    return response.data;
+  }
+
   // ==================== PARTIDOS ====================
   async getPartidos(completo: boolean = false): Promise<Partido[] | PartidoCompleto[]> {
     const response = await this.api.get<Partido[] | PartidoCompleto[]>(

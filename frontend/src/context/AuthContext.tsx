@@ -9,6 +9,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
+  refreshSaldo: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -99,6 +100,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     apiService.logout();
   };
 
+  const refreshSaldo = async () => {
+    if (!apostador) return;
+    try {
+      const saldoData = await apiService.getApostadorSaldo(apostador.id_apostador);
+      const updatedApostador = { ...apostador, saldo_actual: saldoData.saldo_actual };
+      setApostador(updatedApostador);
+      localStorage.setItem('apostador', JSON.stringify(updatedApostador));
+    } catch (error) {
+      console.error('Error al actualizar saldo:', error);
+    }
+  };
+
   const value = {
     user,
     apostador,
@@ -106,6 +119,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     login,
     register,
     logout,
+    refreshSaldo,
     isAuthenticated: user !== null,
   };
 

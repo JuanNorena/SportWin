@@ -84,10 +84,17 @@ router.post('/deposito', async (req: Request, res: Response) => {
             });
         }
 
+        console.log('📥 Datos recibidos para depósito:', {
+            id_apostador,
+            id_metodo_pago,
+            monto,
+            referencia
+        });
+
         const transaccionId = await TransaccionService.createDeposito(
             parseInt(id_apostador),
+            parseInt(id_metodo_pago),  // ← CORREGIDO: Este parámetro estaba en posición incorrecta
             parseFloat(monto),
-            parseInt(id_metodo_pago),
             referencia
         );
 
@@ -125,10 +132,17 @@ router.post('/retiro', async (req: Request, res: Response) => {
             });
         }
 
+        console.log('📤 Datos recibidos para retiro:', {
+            id_apostador,
+            id_metodo_pago,
+            monto,
+            referencia
+        });
+
         const transaccionId = await TransaccionService.createRetiro(
             parseInt(id_apostador),
+            parseInt(id_metodo_pago),  // ← CORREGIDO: Este parámetro estaba en posición incorrecta
             parseFloat(monto),
-            parseInt(id_metodo_pago),
             referencia
         );
 

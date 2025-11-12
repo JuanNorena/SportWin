@@ -26,10 +26,14 @@ router.post('/login', async (req: Request, res: Response) => {
             });
         }
 
+        console.log('Usuario autenticado:', user); // Debug
+
         // Si es apostador, obtener datos adicionales
         let apostador = null;
         if (user.rol && user.rol.toLowerCase() === 'apostador') {
+            console.log('Buscando apostador para user.id:', user.id); // Debug
             apostador = await ApostadorService.getByUserId(user.id);
+            console.log('Apostador encontrado:', apostador); // Debug
         }
 
         res.json({

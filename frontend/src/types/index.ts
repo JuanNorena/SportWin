@@ -129,8 +129,8 @@ export interface Transaccion {
 export interface MetodoPago {
   id_metodo_pago: number;
   nombre: string;
-  codigo: string;
-  comision: number;
+  descripcion?: string;
+  comision: number; // Porcentaje de comisión (ej: 2.50 para 2.5%)
   activo: boolean;
 }
 

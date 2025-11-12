@@ -49,6 +49,11 @@ export const ApuestasPage: React.FC = () => {
     }).format(amount);
   };
 
+  // Helper para convertir valores numéricos que vienen como string desde la BD
+  const toNumber = (value: number | string): number => {
+    return typeof value === 'string' ? parseFloat(value) : value;
+  };
+
   const apuestasFiltradas = apuestas.filter(apuesta => {
     if (filtro === 'todas') return true;
     if (filtro === 'pendientes') return apuesta.estado === 'Pendiente';
@@ -58,13 +63,13 @@ export const ApuestasPage: React.FC = () => {
   });
 
   // Calcular estadísticas
-  const totalApostado = apuestas.reduce((sum, a) => sum + a.monto_apostado, 0);
+  const totalApostado = apuestas.reduce((sum, a) => sum + toNumber(a.monto_apostado), 0);
   const totalGanado = apuestas
     .filter(a => a.estado === 'Ganada')
-    .reduce((sum, a) => sum + (a.ganancia_real || 0), 0);
+    .reduce((sum, a) => sum + toNumber(a.ganancia_real || 0), 0);
   const totalPerdido = apuestas
     .filter(a => a.estado === 'Perdida')
-    .reduce((sum, a) => sum + a.monto_apostado, 0);
+    .reduce((sum, a) => sum + toNumber(a.monto_apostado), 0);
   const pendientes = apuestas.filter(a => a.estado === 'Pendiente').length;
   const ganadas = apuestas.filter(a => a.estado === 'Ganada').length;
   const perdidas = apuestas.filter(a => a.estado === 'Perdida').length;
@@ -208,11 +213,11 @@ export const ApuestasPage: React.FC = () => {
                   <div className="grid grid-cols-3 gap-2">
                     <div>
                       <p className="text-xs text-gray-600 mb-1">Monto</p>
-                      <p className="font-bold">{formatCurrency(apuesta.monto_apostado)}</p>
+                      <p className="font-bold">{formatCurrency(toNumber(apuesta.monto_apostado))}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-600 mb-1">Cuota</p>
-                      <p className="font-bold">{apuesta.cuota_aplicada.toFixed(2)}</p>
+                      <p className="font-bold">{toNumber(apuesta.cuota_aplicada).toFixed(2)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-600 mb-1">
@@ -223,8 +228,8 @@ export const ApuestasPage: React.FC = () => {
                       }`}>
                         {formatCurrency(
                           apuesta.estado === 'Ganada' && apuesta.ganancia_real
-                            ? apuesta.ganancia_real
-                            : apuesta.ganancia_potencial
+                            ? toNumber(apuesta.ganancia_real)
+                            : toNumber(apuesta.ganancia_potencial)
                         )}
                       </p>
                     </div>

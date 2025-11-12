@@ -12,8 +12,6 @@ export class MetodoPagoController {
         while (!exit) {
             const options = [
                 'Listar todos los métodos',
-                'Listar para depósitos',
-                'Listar para retiros',
                 'Buscar por ID',
                 'Crear nuevo método',
                 'Actualizar método',
@@ -29,24 +27,18 @@ export class MetodoPagoController {
                         await this.listar();
                         break;
                     case 2:
-                        await this.listarParaDepositos();
-                        break;
-                    case 3:
-                        await this.listarParaRetiros();
-                        break;
-                    case 4:
                         await this.buscarPorId();
                         break;
-                    case 5:
+                    case 3:
                         await this.crear();
                         break;
-                    case 6:
+                    case 4:
                         await this.actualizar();
                         break;
-                    case 7:
+                    case 5:
                         await this.desactivar();
                         break;
-                    case 8:
+                    case 6:
                         exit = true;
                         break;
                 }
@@ -63,31 +55,7 @@ export class MetodoPagoController {
         if (metodos.length === 0) {
             ConsoleUtils.info('No hay métodos de pago registrados');
         } else {
-            ConsoleUtils.showTable(metodos, ['id_metodo_pago', 'codigo', 'nombre', 'comision_porcentaje', 'tipo_operacion', 'activo']);
-        }
-        
-        ConsoleUtils.pause();
-    }
-
-    private static async listarParaDepositos(): Promise<void> {
-        const metodos = await MetodoPagoService.getParaDepositos();
-        
-        if (metodos.length === 0) {
-            ConsoleUtils.info('No hay métodos disponibles para depósitos');
-        } else {
-            ConsoleUtils.showTable(metodos, ['id_metodo_pago', 'codigo', 'nombre', 'comision_porcentaje', 'activo']);
-        }
-        
-        ConsoleUtils.pause();
-    }
-
-    private static async listarParaRetiros(): Promise<void> {
-        const metodos = await MetodoPagoService.getParaRetiros();
-        
-        if (metodos.length === 0) {
-            ConsoleUtils.info('No hay métodos disponibles para retiros');
-        } else {
-            ConsoleUtils.showTable(metodos, ['id_metodo_pago', 'codigo', 'nombre', 'comision_porcentaje', 'activo']);
+            ConsoleUtils.showTable(metodos, ['id_metodo_pago', 'nombre', 'comision', 'activo']);
         }
         
         ConsoleUtils.pause();
@@ -98,7 +66,7 @@ export class MetodoPagoController {
         const metodo = await MetodoPagoService.getById(id);
         
         if (metodo) {
-            ConsoleUtils.showTable([metodo], ['id_metodo_pago', 'codigo', 'nombre', 'descripcion', 'comision_porcentaje', 'tipo_operacion', 'activo']);
+            ConsoleUtils.showTable([metodo], ['id_metodo_pago', 'nombre', 'descripcion', 'comision', 'activo']);
         } else {
             ConsoleUtils.error('Método de pago no encontrado');
         }
@@ -109,23 +77,16 @@ export class MetodoPagoController {
     private static async crear(): Promise<void> {
         ConsoleUtils.info('=== Nuevo Método de Pago ===');
         
-        const codigo = ConsoleUtils.input('Código (ej: TARJETA, PSE, EFECTY)');
         const nombre = ConsoleUtils.input('Nombre');
         const descripcion = ConsoleUtils.input('Descripción (Enter para omitir)', false) || undefined;
         
         const comisionStr = ConsoleUtils.input('Comisión porcentaje (Enter para 0)', false);
-        const comision_porcentaje = comisionStr ? parseFloat(comisionStr) : 0;
-        
-        const tipoOptions = ['DEPOSITO', 'RETIRO', 'AMBOS'];
-        const tipoChoice = ConsoleUtils.showMenu('Tipo de operación', tipoOptions);
-        const tipo_operacion = tipoOptions[tipoChoice - 1];
+        const comision = comisionStr ? parseFloat(comisionStr) : 0;
         
         const data: Partial<MetodoPago> = {
-            codigo,
             nombre,
             descripcion,
-            comision_porcentaje,
-            tipo_operacion,
+            comision,
             activo: true
         };
         
@@ -136,7 +97,7 @@ export class MetodoPagoController {
 
     private static async actualizar(): Promise<void> {
         const metodos = await MetodoPagoService.getAll();
-        ConsoleUtils.showTable(metodos, ['id_metodo_pago', 'codigo', 'nombre', 'comision_porcentaje']);
+        ConsoleUtils.showTable(metodos, ['id_metodo_pago', 'nombre', 'comision']);
         
         const id = parseInt(ConsoleUtils.input('ID del método a actualizar'));
         const metodo = await MetodoPagoService.getById(id);
@@ -151,10 +112,10 @@ export class MetodoPagoController {
         ConsoleUtils.info('Presiona Enter para mantener el valor actual');
         
         const nombre = ConsoleUtils.input(`Nombre [${metodo.nombre}]`, false) || undefined;
-        const comisionStr = ConsoleUtils.input(`Comisión % [${metodo.comision_porcentaje || 0}]`, false);
-        const comision_porcentaje = comisionStr ? parseFloat(comisionStr) : undefined;
+        const comisionStr = ConsoleUtils.input(`Comisión % [${metodo.comision || 0}]`, false);
+        const comision = comisionStr ? parseFloat(comisionStr) : undefined;
         
-        const data: Partial<MetodoPago> = { nombre, comision_porcentaje };
+        const data: Partial<MetodoPago> = { nombre, comision };
         const success = await MetodoPagoService.update(id, data);
         
         if (success) {
@@ -168,7 +129,7 @@ export class MetodoPagoController {
 
     private static async desactivar(): Promise<void> {
         const metodos = await MetodoPagoService.getAll();
-        ConsoleUtils.showTable(metodos, ['id_metodo_pago', 'codigo', 'nombre', 'activo']);
+        ConsoleUtils.showTable(metodos, ['id_metodo_pago', 'nombre', 'activo']);
         
         const id = parseInt(ConsoleUtils.input('ID del método a desactivar'));
         

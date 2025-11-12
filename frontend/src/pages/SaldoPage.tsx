@@ -4,7 +4,7 @@ import { apiService } from '../services/api';
 import type { TransaccionDetallada, MetodoPago } from '../types';
 
 export const SaldoPage: React.FC = () => {
-  const { apostador, loading: authLoading } = useAuth();
+  const { apostador, loading: authLoading, refreshSaldo } = useAuth();
   const [transacciones, setTransacciones] = useState<TransaccionDetallada[]>([]);
   const [metodosPago, setMetodosPago] = useState<MetodoPago[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,11 +86,7 @@ export const SaldoPage: React.FC = () => {
       
       // Recargar transacciones y actualizar saldo
       setReloadTrigger(prev => prev + 1);
-      
-      // Actualizar el apostador en el contexto después de 1 segundo
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      await refreshSaldo();
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: string } } };
       setError(error.response?.data?.error || 'Error al realizar depósito');
@@ -122,11 +118,7 @@ export const SaldoPage: React.FC = () => {
       
       // Recargar transacciones y actualizar saldo
       setReloadTrigger(prev => prev + 1);
-      
-      // Actualizar el apostador en el contexto después de 1 segundo
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      await refreshSaldo();
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: string } } };
       setError(error.response?.data?.error || 'Error al realizar retiro');
