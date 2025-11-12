@@ -6,29 +6,40 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
+    "start:api": "node dist/api-server.js",
     "dev": "ts-node src/index.ts",
+    "dev:api": "ts-node src/api-server.ts",
     "db:setup": "psql -h localhost -p 5432 -U postgres -d SportWin -f database/01_schema.sql",
     "db:seed": "psql -h localhost -p 5432 -U postgres -d SportWin -f database/02_seed.sql"
   },
-  "keywords": ["apuestas", "deportes", "typescript", "postgresql"],
+  "keywords": [
+    "apuestas",
+    "deportes",
+    "typescript",
+    "postgresql"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "pg": "^8.11.3",
-    "dotenv": "^16.3.1",
-    "pdfkit": "^0.14.0",
-    "readline-sync": "^1.4.10",
     "bcrypt": "^5.1.1",
     "chalk": "^4.1.2",
-    "cli-table3": "^0.6.3"
+    "cli-table3": "^0.6.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^5.1.0",
+    "pdfkit": "^0.14.0",
+    "pg": "^8.11.3",
+    "readline-sync": "^1.4.10"
   },
   "devDependencies": {
-    "@types/node": "^20.10.5",
-    "@types/pg": "^8.10.9",
-    "@types/pdfkit": "^0.13.4",
-    "@types/readline-sync": "^1.4.8",
     "@types/bcrypt": "^5.0.2",
-    "typescript": "^5.3.3",
-    "ts-node": "^10.9.2"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.5",
+    "@types/node": "^20.10.5",
+    "@types/pdfkit": "^0.13.4",
+    "@types/pg": "^8.10.9",
+    "@types/readline-sync": "^1.4.8",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   }
 }

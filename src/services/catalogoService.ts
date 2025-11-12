@@ -132,7 +132,7 @@ export class RolService {
     }
 
     public static async getByNombre(nombre: string): Promise<Rol | null> {
-        const result = await db.query<Rol>('SELECT * FROM Rol WHERE nombre = $1', [nombre]);
+        const result = await db.query<Rol>('SELECT * FROM Rol WHERE LOWER(nombre) = LOWER($1)', [nombre]);
         return result.rows.length > 0 ? result.rows[0] : null;
     }
 }
