@@ -12,6 +12,8 @@
     "db:setup": "psql -h localhost -p 5432 -U postgres -d SportWin -f database/01_schema.sql",
     "db:seed": "psql -h localhost -p 5432 -U postgres -d SportWin -f database/02_seed.sql",
     "db:seed:new": "psql -h localhost -p 5432 -U postgres -d SportWin -f database/02_seed_new.sql",
+    "db:truncate": "psql -h localhost -p 5432 -U postgres -d SportWin -c \"DO $$ DECLARE r record; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP EXECUTE 'TRUNCATE TABLE public.' || quote_ident(r.tablename) || ' RESTART IDENTITY CASCADE'; END LOOP; END $$;\"",
+    "db:clear": "psql -h localhost -p 5432 -U postgres -d postgres -c \"DROP DATABASE IF EXISTS \\\"SportWin\\\"; CREATE DATABASE \\\"SportWin\\\" WITH ENCODING 'UTF8' OWNER postgres;\" && psql -h localhost -p 5432 -U postgres -d SportWin -f database/01_schema.sql",
     "db:recreate": "psql -h localhost -p 5432 -U postgres -d postgres -c \"DROP DATABASE IF EXISTS \\\"SportWin\\\"; CREATE DATABASE \\\"SportWin\\\" WITH ENCODING 'UTF8' OWNER postgres;\" && psql -h localhost -p 5432 -U postgres -d SportWin -f database/01_schema.sql"
   },
   "keywords": [
