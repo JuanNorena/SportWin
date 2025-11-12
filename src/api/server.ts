@@ -10,7 +10,7 @@ import cuotaRouter from './routes/cuotaRoutes';
 import apuestaRouter from './routes/apuestaRoutes';
 import transaccionRouter from './routes/transaccionRoutes';
 import catalogoRouter from './routes/catalogoRoutes';
-import reportRouter from './routes/reportRoutes';
+import reporteRouter from './routes/reporteRoutes';
 
 /**
  * Servidor API REST para SportWin
@@ -78,7 +78,7 @@ export class APIServer {
         this.app.use('/api/apuestas', apuestaRouter);
         this.app.use('/api/transacciones', transaccionRouter);
         this.app.use('/api/catalogos', catalogoRouter);
-        this.app.use('/api/reportes', reportRouter);
+        this.app.use('/api/reportes', reporteRouter);
     }
 
     /**

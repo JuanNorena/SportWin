@@ -4,7 +4,6 @@ import { ApostadorController } from './apostadorController';
 import { PartidoController } from './partidoController';
 import { ApuestaController } from './apuestaController';
 import { TransaccionController } from './transaccionController';
-import { ReportController } from './reportController';
 import { CatalogoController } from './catalogoController';
 import { DeporteController } from './deporteController';
 import { LigaController } from './ligaController';
@@ -319,18 +318,15 @@ export class MainController {
                     await TransaccionController.menu();
                     break;
                 case 8:
-                    await ReportController.menu();
-                    break;
-                case 9:
                     await CatalogoController.menu();
                     break;
-                case 10:
+                case 9:
                     AuthService.logout();
                     ConsoleUtils.success('Sesión cerrada');
                     ConsoleUtils.pause();
                     await this.start();
                     return;
-                case 11:
+                case 10:
                     exit = true;
                     break;
             }

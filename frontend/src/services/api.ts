@@ -245,6 +245,21 @@ class ApiService {
     );
     return response.data;
   }
+
+  // ==================== REPORTES ====================
+  async ejecutarReporte(reporteId: string, parametros: Record<string, string>): Promise<{
+    columns: string[];
+    rows: Record<string, unknown>[];
+  }> {
+    const response = await this.api.post<{
+      columns: string[];
+      rows: Record<string, unknown>[];
+    }>('/reportes/ejecutar', {
+      reporteId,
+      parametros,
+    });
+    return response.data;
+  }
 }
 
 export const apiService = new ApiService();

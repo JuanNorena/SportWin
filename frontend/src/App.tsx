@@ -8,6 +8,7 @@ import { PartidosPage } from './pages/PartidosPage';
 import { PartidoDetailPage } from './pages/PartidoDetailPage';
 import { ApuestasPage } from './pages/ApuestasPage';
 import { SaldoPage } from './pages/SaldoPage';
+import { ReportesPage } from './pages/ReportesPage';
 
 // Componente para rutas protegidas
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
@@ -58,6 +59,14 @@ function App() {
               element={
                 <PrivateRoute>
                   <SaldoPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/reportes"
+              element={
+                <PrivateRoute>
+                  <ReportesPage />
                 </PrivateRoute>
               }
             />

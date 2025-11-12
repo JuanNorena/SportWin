@@ -30,6 +30,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <Link to="/saldo" className="hover:underline">
                   Mi Saldo
                 </Link>
+                <Link to="/reportes" className="hover:underline">
+                  Reportes
+                </Link>
                 <span className="text-gray-600">
                   {user?.nombre} {user?.apellido}
                 </span>
