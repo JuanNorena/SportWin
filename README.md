@@ -112,6 +112,13 @@ psql -h localhost -p 5432 -U postgres -d SportWin -f database/01_schema.sql
 
 # Cargar datos de ejemplo
 psql -h localhost -p 5432 -U postgres -d SportWin -f database/02_seed.sql
+
+# Opciones adicionales (nuevo seed file y scripts npm)
+# Re-crear la base de datos y aplicar schema (utiliza el script npm db:recreate)
+# PGPASSWORD='sebas031800' npm run db:recreate
+
+# Cargar datos con 02_seed_new.sql (utiliza el script npm db:seed:new)
+# PGPASSWORD='sebas031800' npm run db:seed:new
 ```
 
 ### Paso 4: Compilar TypeScript
