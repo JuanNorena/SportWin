@@ -63,20 +63,20 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="border-2 border-black p-8">
-        <h1 className="text-3xl font-bold mb-6 text-center">Registro</h1>
+    <div className="w-full max-w-2xl mx-auto px-4">
+      <div className="border-2 border-black p-4 sm:p-6 md:p-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center">Registro</h1>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-600 text-red-600">
+          <div className="mb-4 p-3 bg-red-50 border border-red-600 text-red-600 text-sm sm:text-base break-words">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-2 font-medium">Nombre</label>
+              <label className="block mb-2 font-medium text-sm sm:text-base">Nombre</label>
               <input
                 type="text"
                 name="nombre"
@@ -84,11 +84,12 @@ export const RegisterPage: React.FC = () => {
                 onChange={handleChange}
                 required
                 disabled={loading}
+                className="w-full text-sm sm:text-base"
               />
             </div>
 
             <div>
-              <label className="block mb-2 font-medium">Apellido</label>
+              <label className="block mb-2 font-medium text-sm sm:text-base">Apellido</label>
               <input
                 type="text"
                 name="apellido"
@@ -96,12 +97,13 @@ export const RegisterPage: React.FC = () => {
                 onChange={handleChange}
                 required
                 disabled={loading}
+                className="w-full text-sm sm:text-base"
               />
             </div>
           </div>
 
           <div>
-            <label className="block mb-2 font-medium">Email</label>
+            <label className="block mb-2 font-medium text-sm sm:text-base">Email</label>
             <input
               type="email"
               name="email"
@@ -109,11 +111,12 @@ export const RegisterPage: React.FC = () => {
               onChange={handleChange}
               required
               disabled={loading}
+              className="w-full text-sm sm:text-base"
             />
           </div>
 
           <div>
-            <label className="block mb-2 font-medium">Usuario</label>
+            <label className="block mb-2 font-medium text-sm sm:text-base">Usuario</label>
             <input
               type="text"
               name="username"
@@ -121,12 +124,13 @@ export const RegisterPage: React.FC = () => {
               onChange={handleChange}
               required
               disabled={loading}
+              className="w-full text-sm sm:text-base"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-2 font-medium">Contraseña</label>
+              <label className="block mb-2 font-medium text-sm sm:text-base">Contraseña</label>
               <input
                 type="password"
                 name="password"
@@ -134,11 +138,12 @@ export const RegisterPage: React.FC = () => {
                 onChange={handleChange}
                 required
                 disabled={loading}
+                className="w-full text-sm sm:text-base"
               />
             </div>
 
             <div>
-              <label className="block mb-2 font-medium">Confirmar Contraseña</label>
+              <label className="block mb-2 font-medium text-sm sm:text-base">Confirmar Contraseña</label>
               <input
                 type="password"
                 name="confirmPassword"
@@ -146,16 +151,17 @@ export const RegisterPage: React.FC = () => {
                 onChange={handleChange}
                 required
                 disabled={loading}
+                className="w-full text-sm sm:text-base"
               />
             </div>
           </div>
 
           <div className="border-t border-gray-300 pt-4 mt-4">
-            <h3 className="font-bold mb-4">Información Adicional</h3>
+            <h3 className="font-bold mb-4 text-sm sm:text-base">Información Adicional</h3>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block mb-2 font-medium">Documento</label>
+                <label className="block mb-2 font-medium text-sm sm:text-base">Documento</label>
                 <input
                   type="text"
                   name="documento"
@@ -163,11 +169,12 @@ export const RegisterPage: React.FC = () => {
                   onChange={handleChange}
                   required
                   disabled={loading}
+                  className="w-full text-sm sm:text-base"
                 />
               </div>
 
               <div>
-                <label className="block mb-2 font-medium">Fecha de Nacimiento</label>
+                <label className="block mb-2 font-medium text-sm sm:text-base">Fecha de Nacimiento</label>
                 <input
                   type="date"
                   name="fecha_nacimiento"
@@ -175,18 +182,20 @@ export const RegisterPage: React.FC = () => {
                   onChange={handleChange}
                   required
                   disabled={loading}
+                  className="w-full text-sm sm:text-base"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block mb-2 font-medium">Teléfono</label>
+              <label className="block mb-2 font-medium text-sm sm:text-base">Teléfono</label>
               <input
                 type="tel"
                 name="telefono"
                 value={formData.telefono}
                 onChange={handleChange}
                 disabled={loading}
+                className="w-full text-sm sm:text-base"
               />
             </div>
           </div>
@@ -194,13 +203,13 @@ export const RegisterPage: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full"
+            className="btn-primary w-full text-sm sm:text-base"
           >
             {loading ? 'Registrando...' : 'Registrarse'}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm">
+        <div className="mt-4 sm:mt-6 text-center text-xs sm:text-sm">
           <p className="text-gray-600">
             ¿Ya tienes cuenta?{' '}
             <Link to="/login" className="text-black font-medium hover:underline">

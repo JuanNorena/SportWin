@@ -47,26 +47,26 @@ export const PartidosPage: React.FC = () => {
   };
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-4">Partidos</h1>
+    <div className="w-full max-w-6xl mx-auto">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">Partidos</h1>
         
-        <div className="flex gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
           <button
             onClick={() => setFiltro('programados')}
-            className={filtro === 'programados' ? 'btn-primary' : 'btn-secondary'}
+            className={`${filtro === 'programados' ? 'btn-primary' : 'btn-secondary'} text-sm sm:text-base px-3 py-2`}
           >
             Próximos
           </button>
           <button
             onClick={() => setFiltro('finalizados')}
-            className={filtro === 'finalizados' ? 'btn-primary' : 'btn-secondary'}
+            className={`${filtro === 'finalizados' ? 'btn-primary' : 'btn-secondary'} text-sm sm:text-base px-3 py-2`}
           >
             Finalizados
           </button>
           <button
             onClick={() => setFiltro('todos')}
-            className={filtro === 'todos' ? 'btn-primary' : 'btn-secondary'}
+            className={`${filtro === 'todos' ? 'btn-primary' : 'btn-secondary'} text-sm sm:text-base px-3 py-2`}
           >
             Todos
           </button>
@@ -74,60 +74,60 @@ export const PartidosPage: React.FC = () => {
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-600 text-red-600">
+        <div className="mb-4 p-3 bg-red-50 border border-red-600 text-red-600 text-sm sm:text-base break-words">
           {error}
         </div>
       )}
 
       {loading ? (
         <div className="text-center py-12">
-          <p className="text-gray-600">Cargando partidos...</p>
+          <p className="text-gray-600 text-sm sm:text-base">Cargando partidos...</p>
         </div>
       ) : partidos.length === 0 ? (
         <div className="text-center py-12 border border-gray-300">
-          <p className="text-gray-600">No hay partidos disponibles</p>
+          <p className="text-gray-600 text-sm sm:text-base">No hay partidos disponibles</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {partidos.map((partido) => (
             <div
               key={partido.id_partido}
-              className="border border-gray-300 p-6 hover:border-black transition-colors"
+              className="border border-gray-300 p-4 sm:p-6 hover:border-black transition-colors"
             >
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <p className="text-sm text-gray-600">{partido.liga} · {partido.deporte}</p>
-                  <p className="text-sm text-gray-600">{formatDate(partido.fecha_hora)}</p>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-4">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm text-gray-600 truncate">{partido.liga} · {partido.deporte}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">{formatDate(partido.fecha_hora)}</p>
                 </div>
                 {partido.estado && (
-                  <span className="text-sm px-3 py-1 border border-black">
+                  <span className="text-xs sm:text-sm px-2 sm:px-3 py-1 border border-black whitespace-nowrap self-start">
                     {partido.estado}
                   </span>
                 )}
               </div>
 
-              <div className="grid grid-cols-3 gap-4 items-center mb-4">
-                <div className="text-right">
-                  <p className="font-bold text-lg">{partido.equipo_local}</p>
+              <div className="grid grid-cols-[1fr_auto_1fr] gap-2 sm:gap-4 items-center mb-4">
+                <div className="text-right min-w-0">
+                  <p className="font-bold text-sm sm:text-base md:text-lg break-words">{partido.equipo_local}</p>
                 </div>
                 
-                <div className="text-center">
+                <div className="text-center px-2">
                   {partido.goles_local !== undefined && partido.goles_visitante !== undefined ? (
-                    <p className="text-3xl font-bold">
+                    <p className="text-xl sm:text-2xl md:text-3xl font-bold whitespace-nowrap">
                       {partido.goles_local} - {partido.goles_visitante}
                     </p>
                   ) : (
-                    <p className="text-2xl font-bold">VS</p>
+                    <p className="text-lg sm:text-xl md:text-2xl font-bold">VS</p>
                   )}
                 </div>
                 
-                <div className="text-left">
-                  <p className="font-bold text-lg">{partido.equipo_visitante}</p>
+                <div className="text-left min-w-0">
+                  <p className="font-bold text-sm sm:text-base md:text-lg break-words">{partido.equipo_visitante}</p>
                 </div>
               </div>
 
               {partido.estadio && (
-                <p className="text-sm text-gray-600 text-center">
+                <p className="text-xs sm:text-sm text-gray-600 text-center truncate">
                   📍 {partido.estadio}
                 </p>
               )}
@@ -136,7 +136,7 @@ export const PartidosPage: React.FC = () => {
                 <div className="mt-4 pt-4 border-t border-gray-300">
                   <button 
                     onClick={() => navigate(`/partidos/${partido.id_partido}`)}
-                    className="btn-primary w-full"
+                    className="btn-primary w-full text-sm sm:text-base"
                   >
                     Ver Cuotas y Apostar
                   </button>

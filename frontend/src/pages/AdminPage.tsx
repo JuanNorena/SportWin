@@ -40,24 +40,24 @@ export const AdminPage = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6 md:py-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Panel de Administración</h1>
-        <p className="text-gray-600 mt-2">
+      <div className="mb-4 sm:mb-6 md:mb-8">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">Panel de Administración</h1>
+        <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">
           Gestiona deportes, ligas, equipos y partidos del sistema
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="flex space-x-8">
+      <div className="border-b border-gray-200 mb-4 sm:mb-6 overflow-x-auto">
+        <nav className="flex space-x-4 sm:space-x-8 min-w-min">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`
-                py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm transition-colors whitespace-nowrap
                 ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-blue-600'
@@ -65,7 +65,7 @@ export const AdminPage = () => {
                 }
               `}
             >
-              <span className="mr-2">{tab.icon}</span>
+              <span className="mr-1 sm:mr-2">{tab.icon}</span>
               {tab.label}
             </button>
           ))}

@@ -161,16 +161,16 @@ export const SaldoPage: React.FC = () => {
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-6">Mi Saldo</h1>
+    <div className="max-w-6xl mx-auto px-4">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6">Mi Saldo</h1>
 
         {/* Saldo actual */}
-        <div className="border-2 border-black p-8 mb-6 text-center">
-          <p className="text-sm text-gray-600 mb-2">Saldo Disponible</p>
-          <p className="text-5xl font-bold mb-4">{formatCurrency(apostador.saldo_actual)}</p>
+        <div className="border-2 border-black p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 text-center">
+          <p className="text-xs sm:text-sm text-gray-600 mb-2">Saldo Disponible</p>
+          <p className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 break-words">{formatCurrency(apostador.saldo_actual)}</p>
           
-          <div className="flex gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center">
             <button
               onClick={() => {
                 setShowDepositForm(true);
@@ -178,7 +178,7 @@ export const SaldoPage: React.FC = () => {
                 setError('');
                 setSuccessMessage('');
               }}
-              className="btn-primary"
+              className="btn-primary text-sm sm:text-base w-full sm:w-auto"
             >
               💰 Depositar
             </button>
@@ -189,7 +189,7 @@ export const SaldoPage: React.FC = () => {
                 setError('');
                 setSuccessMessage('');
               }}
-              className="btn-secondary"
+              className="btn-secondary text-sm sm:text-base w-full sm:w-auto"
               disabled={apostador.saldo_actual <= 0}
             >
               💳 Retirar
@@ -212,11 +212,11 @@ export const SaldoPage: React.FC = () => {
 
         {/* Formulario de depósito */}
         {showDepositForm && (
-          <div className="border border-gray-300 p-6 mb-6">
-            <h2 className="text-2xl font-bold mb-4">Realizar Depósito</h2>
-            <form onSubmit={handleDeposit} className="space-y-4">
+          <div className="border border-gray-300 p-4 sm:p-6 mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Realizar Depósito</h2>
+            <form onSubmit={handleDeposit} className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block mb-2 font-medium">Monto</label>
+                <label className="block mb-2 font-medium text-sm sm:text-base">Monto</label>
                 <input
                   type="number"
                   value={depositAmount}
@@ -226,17 +226,19 @@ export const SaldoPage: React.FC = () => {
                   step="1000"
                   disabled={depositLoading}
                   placeholder="Ingrese el monto a depositar"
+                  className="w-full text-sm sm:text-base"
                 />
-                <p className="text-sm text-gray-600 mt-1">Monto mínimo: $1,000</p>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1">Monto mínimo: $1,000</p>
               </div>
 
               <div>
-                <label className="block mb-2 font-medium">Método de Pago</label>
+                <label className="block mb-2 font-medium text-sm sm:text-base">Método de Pago</label>
                 <select
                   value={depositMetodo}
                   onChange={(e) => setDepositMetodo(e.target.value)}
                   required
                   disabled={depositLoading}
+                  className="w-full text-sm sm:text-base"
                 >
                   {metodosPago.map((metodo) => (
                     <option key={metodo.id_metodo_pago} value={metodo.id_metodo_pago}>
@@ -247,21 +249,22 @@ export const SaldoPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block mb-2 font-medium">Referencia (Opcional)</label>
+                <label className="block mb-2 font-medium text-sm sm:text-base">Referencia (Opcional)</label>
                 <input
                   type="text"
                   value={depositReferencia}
                   onChange={(e) => setDepositReferencia(e.target.value)}
                   disabled={depositLoading}
                   placeholder="Número de confirmación, código, etc."
+                  className="w-full text-sm sm:text-base"
                 />
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   type="submit"
                   disabled={depositLoading}
-                  className="btn-primary"
+                  className="btn-primary flex-1 text-sm sm:text-base"
                 >
                   {depositLoading ? 'Procesando...' : 'Confirmar Depósito'}
                 </button>
@@ -273,7 +276,7 @@ export const SaldoPage: React.FC = () => {
                     setDepositReferencia('');
                   }}
                   disabled={depositLoading}
-                  className="btn-secondary"
+                  className="btn-secondary text-sm sm:text-base"
                 >
                   Cancelar
                 </button>
@@ -284,11 +287,11 @@ export const SaldoPage: React.FC = () => {
 
         {/* Formulario de retiro */}
         {showWithdrawForm && (
-          <div className="border border-gray-300 p-6 mb-6">
-            <h2 className="text-2xl font-bold mb-4">Realizar Retiro</h2>
-            <form onSubmit={handleWithdraw} className="space-y-4">
+          <div className="border border-gray-300 p-4 sm:p-6 mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Realizar Retiro</h2>
+            <form onSubmit={handleWithdraw} className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block mb-2 font-medium">Monto</label>
+                <label className="block mb-2 font-medium text-sm sm:text-base">Monto</label>
                 <input
                   type="number"
                   value={withdrawAmount}
@@ -299,19 +302,21 @@ export const SaldoPage: React.FC = () => {
                   step="1000"
                   disabled={withdrawLoading}
                   placeholder="Ingrese el monto a retirar"
+                  className="w-full text-sm sm:text-base"
                 />
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-xs sm:text-sm text-gray-600 mt-1 break-words">
                   Saldo disponible: {formatCurrency(apostador.saldo_actual)}
                 </p>
               </div>
 
               <div>
-                <label className="block mb-2 font-medium">Método de Pago</label>
+                <label className="block mb-2 font-medium text-sm sm:text-base">Método de Pago</label>
                 <select
                   value={withdrawMetodo}
                   onChange={(e) => setWithdrawMetodo(e.target.value)}
                   required
                   disabled={withdrawLoading}
+                  className="w-full text-sm sm:text-base"
                 >
                   {metodosPago.map((metodo) => (
                     <option key={metodo.id_metodo_pago} value={metodo.id_metodo_pago}>
@@ -322,21 +327,22 @@ export const SaldoPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block mb-2 font-medium">Referencia (Opcional)</label>
+                <label className="block mb-2 font-medium text-sm sm:text-base">Referencia (Opcional)</label>
                 <input
                   type="text"
                   value={withdrawReferencia}
                   onChange={(e) => setWithdrawReferencia(e.target.value)}
                   disabled={withdrawLoading}
                   placeholder="Número de cuenta, documento, etc."
+                  className="w-full text-sm sm:text-base"
                 />
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   type="submit"
                   disabled={withdrawLoading}
-                  className="btn-primary"
+                  className="btn-primary flex-1 text-sm sm:text-base"
                 >
                   {withdrawLoading ? 'Procesando...' : 'Confirmar Retiro'}
                 </button>
@@ -348,7 +354,7 @@ export const SaldoPage: React.FC = () => {
                     setWithdrawReferencia('');
                   }}
                   disabled={withdrawLoading}
-                  className="btn-secondary"
+                  className="btn-secondary text-sm sm:text-base"
                 >
                   Cancelar
                 </button>
@@ -359,20 +365,20 @@ export const SaldoPage: React.FC = () => {
       </div>
 
       {/* Historial de transacciones */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-4">Historial de Transacciones</h2>
+      <div className="mb-6 sm:mb-8">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4">Historial de Transacciones</h2>
 
         {loading ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600">Cargando transacciones...</p>
+          <div className="text-center py-8 sm:py-12">
+            <p className="text-sm sm:text-base text-gray-600">Cargando transacciones...</p>
           </div>
         ) : transacciones.length === 0 ? (
-          <div className="text-center py-12 border border-gray-300">
-            <p className="text-gray-600">No hay transacciones registradas</p>
+          <div className="text-center py-8 sm:py-12 border border-gray-300">
+            <p className="text-sm sm:text-base text-gray-600">No hay transacciones registradas</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border border-gray-300">
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <table className="w-full border border-gray-300 min-w-[800px]">
               <thead>
                 <tr className="bg-gray-100">
                   <th className="border border-gray-300 p-3 text-left">Fecha</th>

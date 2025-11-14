@@ -160,45 +160,45 @@ export const PartidoDetailPage: React.FC = () => {
   }
 
   return (
-    <div>
-      <button onClick={() => navigate('/partidos')} className="btn-secondary mb-6">
+    <div className="max-w-6xl mx-auto px-4">
+      <button onClick={() => navigate('/partidos')} className="btn-secondary mb-4 sm:mb-6 text-sm sm:text-base">
         ← Volver a Partidos
       </button>
 
       {partido && (
-        <div className="border-2 border-black p-6 mb-8">
+        <div className="border-2 border-black p-4 sm:p-6 mb-6 sm:mb-8">
           <div className="mb-4">
-            <p className="text-sm text-gray-600">{partido.liga} · {partido.deporte}</p>
-            <p className="text-sm text-gray-600">{formatDate(partido.fecha_hora)}</p>
+            <p className="text-xs sm:text-sm text-gray-600 break-words">{partido.liga} · {partido.deporte}</p>
+            <p className="text-xs sm:text-sm text-gray-600">{formatDate(partido.fecha_hora)}</p>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 items-center mb-4">
-            <div className="text-right">
-              <p className="font-bold text-2xl">{partido.equipo_local}</p>
+          <div className="grid grid-cols-[1fr_auto_1fr] gap-2 sm:gap-4 items-center mb-4">
+            <div className="text-right min-w-0">
+              <p className="font-bold text-base sm:text-xl md:text-2xl break-words">{partido.equipo_local}</p>
             </div>
             
-            <div className="text-center">
+            <div className="text-center px-2 sm:px-4">
               {partido.goles_local !== undefined && partido.goles_visitante !== undefined ? (
-                <p className="text-4xl font-bold">
+                <p className="text-2xl sm:text-3xl md:text-4xl font-bold whitespace-nowrap">
                   {partido.goles_local} - {partido.goles_visitante}
                 </p>
               ) : (
-                <p className="text-3xl font-bold">VS</p>
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold">VS</p>
               )}
             </div>
             
-            <div className="text-left">
-              <p className="font-bold text-2xl">{partido.equipo_visitante}</p>
+            <div className="text-left min-w-0">
+              <p className="font-bold text-base sm:text-xl md:text-2xl break-words">{partido.equipo_visitante}</p>
             </div>
           </div>
 
           {partido.estadio && (
-            <p className="text-center text-gray-600">📍 {partido.estadio}</p>
+            <p className="text-center text-xs sm:text-sm text-gray-600 truncate">📍 {partido.estadio}</p>
           )}
 
           {partido.estado && (
             <div className="text-center mt-4">
-              <span className="text-sm px-4 py-2 border border-black font-medium">
+              <span className="text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2 border border-black font-medium inline-block">
                 {partido.estado}
               </span>
             </div>
@@ -220,23 +220,23 @@ export const PartidoDetailPage: React.FC = () => {
       )}
 
       {/* Cuotas disponibles */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-4">Cuotas Disponibles</h2>
+      <div className="mb-6 sm:mb-8">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4">Cuotas Disponibles</h2>
 
         {loading ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600">Cargando cuotas...</p>
+          <div className="text-center py-8 sm:py-12">
+            <p className="text-sm sm:text-base text-gray-600">Cargando cuotas...</p>
           </div>
         ) : cuotas.length === 0 ? (
-          <div className="text-center py-12 border border-gray-300">
-            <p className="text-gray-600">No hay cuotas disponibles para este partido</p>
+          <div className="text-center py-8 sm:py-12 border border-gray-300">
+            <p className="text-sm sm:text-base text-gray-600">No hay cuotas disponibles para este partido</p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {Object.entries(cuotasPorTipo).map(([tipo, cuotasTipo]) => (
-              <div key={tipo} className="border border-gray-300 p-4">
-                <h3 className="font-bold text-lg mb-3">{tipo}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div key={tipo} className="border border-gray-300 p-3 sm:p-4">
+                <h3 className="font-bold text-base sm:text-lg md:text-xl mb-2 sm:mb-3 break-words">{tipo}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                   {cuotasTipo.map((cuota) => (
                     <button
                       key={cuota.id_cuota}
@@ -249,7 +249,7 @@ export const PartidoDetailPage: React.FC = () => {
                         }
                       }}
                       disabled={!cuota.activo}
-                      className={`p-4 border-2 transition-all text-left ${
+                      className={`p-3 sm:p-4 border-2 transition-all text-left ${
                         selectedCuota?.id_cuota === cuota.id_cuota
                           ? 'border-black bg-black text-white'
                           : cuota.activo
@@ -257,11 +257,11 @@ export const PartidoDetailPage: React.FC = () => {
                           : 'border-gray-200 bg-gray-100 cursor-not-allowed opacity-50'
                       }`}
                     >
-                      <p className="text-sm mb-1">{cuota.descripcion}</p>
+                      <p className="text-xs sm:text-sm mb-1 break-words">{cuota.descripcion}</p>
                       {cuota.resultado_esperado && (
-                        <p className="text-xs mb-2 opacity-75">{cuota.resultado_esperado}</p>
+                        <p className="text-xs mb-2 opacity-75 break-words">{cuota.resultado_esperado}</p>
                       )}
-                      <p className="text-2xl font-bold">{getCuotaValue(cuota).toFixed(2)}</p>
+                      <p className="text-xl sm:text-2xl font-bold">{getCuotaValue(cuota).toFixed(2)}</p>
                     </button>
                   ))}
                 </div>
@@ -273,26 +273,26 @@ export const PartidoDetailPage: React.FC = () => {
 
       {/* Formulario de apuesta */}
       {isAuthenticated && apostador && selectedCuota && (
-        <div className="border-2 border-black p-6 sticky bottom-0 bg-white">
-          <h2 className="text-2xl font-bold mb-4">Realizar Apuesta</h2>
+        <div className="border-2 border-black p-4 sm:p-6 sticky bottom-0 bg-white">
+          <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Realizar Apuesta</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Cuota Seleccionada</p>
-              <p className="font-bold">{selectedCuota.tipo_apuesta}</p>
-              <p className="text-sm text-gray-600">{selectedCuota.descripcion}</p>
-              <p className="text-2xl font-bold mt-2">{getCuotaValue(selectedCuota).toFixed(2)}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-3 sm:mb-4">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-gray-600 mb-1">Cuota Seleccionada</p>
+              <p className="font-bold text-sm sm:text-base break-words">{selectedCuota.tipo_apuesta}</p>
+              <p className="text-xs sm:text-sm text-gray-600 break-words">{selectedCuota.descripcion}</p>
+              <p className="text-xl sm:text-2xl font-bold mt-2">{getCuotaValue(selectedCuota).toFixed(2)}</p>
             </div>
 
             <div>
-              <p className="text-sm text-gray-600 mb-1">Tu Saldo</p>
-              <p className="text-2xl font-bold">{formatCurrency(apostador.saldo_actual)}</p>
+              <p className="text-xs sm:text-sm text-gray-600 mb-1">Tu Saldo</p>
+              <p className="text-xl sm:text-2xl font-bold break-words">{formatCurrency(apostador.saldo_actual)}</p>
             </div>
           </div>
 
-          <form onSubmit={handleApostar} className="space-y-4">
+          <form onSubmit={handleApostar} className="space-y-3 sm:space-y-4">
             <div>
-              <label className="block mb-2 font-medium">Monto a Apostar</label>
+              <label className="block mb-2 font-medium text-sm sm:text-base">Monto a Apostar</label>
               <input
                 type="number"
                 value={montoApuesta}
@@ -303,29 +303,30 @@ export const PartidoDetailPage: React.FC = () => {
                 step="1000"
                 disabled={apuestaLoading}
                 placeholder="Ingrese el monto"
+                className="w-full text-sm sm:text-base"
               />
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-xs sm:text-sm text-gray-600 mt-1 break-words">
                 Monto mínimo: $1,000 · Máximo: {formatCurrency(apostador.saldo_actual)}
               </p>
             </div>
 
             {montoApuesta && parseFloat(montoApuesta) > 0 && (
-              <div className="border border-gray-300 p-4 bg-gray-50">
-                <p className="text-sm text-gray-600 mb-1">Ganancia Potencial</p>
-                <p className="text-3xl font-bold text-green-600">
+              <div className="border border-gray-300 p-3 sm:p-4 bg-gray-50">
+                <p className="text-xs sm:text-sm text-gray-600 mb-1">Ganancia Potencial</p>
+                <p className="text-2xl sm:text-3xl font-bold text-green-600 break-words">
                   {formatCurrency(calcularGanancia())}
                 </p>
-                <p className="text-xs text-gray-600 mt-2">
+                <p className="text-xs text-gray-600 mt-2 break-words">
                   = {montoApuesta} × {getCuotaValue(selectedCuota).toFixed(2)}
                 </p>
               </div>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 type="submit"
                 disabled={apuestaLoading || !montoApuesta}
-                className="btn-primary flex-1"
+                className="btn-primary flex-1 text-sm sm:text-base"
               >
                 {apuestaLoading ? 'Procesando...' : 'Confirmar Apuesta'}
               </button>
@@ -337,7 +338,7 @@ export const PartidoDetailPage: React.FC = () => {
                   setError('');
                 }}
                 disabled={apuestaLoading}
-                className="btn-secondary"
+                className="btn-secondary text-sm sm:text-base"
               >
                 Cancelar
               </button>
@@ -347,9 +348,9 @@ export const PartidoDetailPage: React.FC = () => {
       )}
 
       {!isAuthenticated && (
-        <div className="border border-gray-300 p-6 text-center">
-          <p className="text-gray-600 mb-4">Inicia sesión para realizar apuestas</p>
-          <button onClick={() => navigate('/login')} className="btn-primary">
+        <div className="border border-gray-300 p-4 sm:p-6 text-center">
+          <p className="text-sm sm:text-base text-gray-600 mb-4">Inicia sesión para realizar apuestas</p>
+          <button onClick={() => navigate('/login')} className="btn-primary text-sm sm:text-base">
             Iniciar Sesión
           </button>
         </div>

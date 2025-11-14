@@ -92,56 +92,56 @@ export const ApuestasPage: React.FC = () => {
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-6">Mis Apuestas</h1>
+    <div className="max-w-6xl mx-auto px-4">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6">Mis Apuestas</h1>
 
         {/* Estadísticas */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="border border-gray-300 p-4">
-            <p className="text-sm text-gray-600 mb-1">Total Apostado</p>
-            <p className="text-2xl font-bold">{formatCurrency(totalApostado)}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
+          <div className="border border-gray-300 p-3 sm:p-4">
+            <p className="text-xs sm:text-sm text-gray-600 mb-1">Total Apostado</p>
+            <p className="text-base sm:text-xl md:text-2xl font-bold break-words">{formatCurrency(totalApostado)}</p>
           </div>
-          <div className="border border-green-600 p-4">
-            <p className="text-sm text-gray-600 mb-1">Total Ganado</p>
-            <p className="text-2xl font-bold text-green-600">{formatCurrency(totalGanado)}</p>
+          <div className="border border-green-600 p-3 sm:p-4">
+            <p className="text-xs sm:text-sm text-gray-600 mb-1">Total Ganado</p>
+            <p className="text-base sm:text-xl md:text-2xl font-bold text-green-600 break-words">{formatCurrency(totalGanado)}</p>
             <p className="text-xs text-gray-600">{ganadas} apuestas</p>
           </div>
-          <div className="border border-red-600 p-4">
-            <p className="text-sm text-gray-600 mb-1">Total Perdido</p>
-            <p className="text-2xl font-bold text-red-600">{formatCurrency(totalPerdido)}</p>
+          <div className="border border-red-600 p-3 sm:p-4">
+            <p className="text-xs sm:text-sm text-gray-600 mb-1">Total Perdido</p>
+            <p className="text-base sm:text-xl md:text-2xl font-bold text-red-600 break-words">{formatCurrency(totalPerdido)}</p>
             <p className="text-xs text-gray-600">{perdidas} apuestas</p>
           </div>
-          <div className="border border-gray-300 p-4">
-            <p className="text-sm text-gray-600 mb-1">Pendientes</p>
-            <p className="text-2xl font-bold">{pendientes}</p>
+          <div className="border border-gray-300 p-3 sm:p-4">
+            <p className="text-xs sm:text-sm text-gray-600 mb-1">Pendientes</p>
+            <p className="text-base sm:text-xl md:text-2xl font-bold">{pendientes}</p>
             <p className="text-xs text-gray-600">apuestas activas</p>
           </div>
         </div>
 
         {/* Filtros */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
           <button
             onClick={() => setFiltro('todas')}
-            className={filtro === 'todas' ? 'btn-primary' : 'btn-secondary'}
+            className={`${filtro === 'todas' ? 'btn-primary' : 'btn-secondary'} text-xs sm:text-sm px-3 py-2`}
           >
             Todas ({apuestas.length})
           </button>
           <button
             onClick={() => setFiltro('pendientes')}
-            className={filtro === 'pendientes' ? 'btn-primary' : 'btn-secondary'}
+            className={`${filtro === 'pendientes' ? 'btn-primary' : 'btn-secondary'} text-xs sm:text-sm px-3 py-2`}
           >
             Pendientes ({pendientes})
           </button>
           <button
             onClick={() => setFiltro('ganadas')}
-            className={filtro === 'ganadas' ? 'btn-primary' : 'btn-secondary'}
+            className={`${filtro === 'ganadas' ? 'btn-primary' : 'btn-secondary'} text-xs sm:text-sm px-3 py-2`}
           >
             Ganadas ({ganadas})
           </button>
           <button
             onClick={() => setFiltro('perdidas')}
-            className={filtro === 'perdidas' ? 'btn-primary' : 'btn-secondary'}
+            className={`${filtro === 'perdidas' ? 'btn-primary' : 'btn-secondary'} text-xs sm:text-sm px-3 py-2`}
           >
             Perdidas ({perdidas})
           </button>
@@ -167,11 +167,11 @@ export const ApuestasPage: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {apuestasFiltradas.map((apuesta) => (
             <div
               key={apuesta.id_apuesta}
-              className={`border p-6 ${
+              className={`border p-4 sm:p-6 ${
                 apuesta.estado === 'Ganada' 
                   ? 'border-green-600 bg-green-50' 
                   : apuesta.estado === 'Perdida' 
@@ -179,18 +179,18 @@ export const ApuestasPage: React.FC = () => {
                   : 'border-gray-300'
               }`}
             >
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <p className="text-sm text-gray-600">
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-2 sm:gap-0 mb-3 sm:mb-4">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm text-gray-600 break-words">
                     {apuesta.liga} · {apuesta.deporte}
                   </p>
-                  <p className="font-bold text-lg mb-1">{apuesta.partido}</p>
-                  <p className="text-sm text-gray-600">
+                  <p className="font-bold text-sm sm:text-base md:text-lg mb-1 break-words">{apuesta.partido}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">
                     {formatDate(apuesta.fecha_apuesta)}
                   </p>
                 </div>
                 <span
-                  className={`text-sm px-3 py-1 border font-medium ${
+                  className={`text-xs sm:text-sm px-2 sm:px-3 py-1 border font-medium whitespace-nowrap ${
                     apuesta.estado === 'Ganada'
                       ? 'border-green-600 text-green-600'
                       : apuesta.estado === 'Perdida'
@@ -202,28 +202,28 @@ export const ApuestasPage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="border-t border-gray-300 pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Tipo de Apuesta</p>
-                    <p className="font-medium">{apuesta.tipo_apuesta}</p>
-                    <p className="text-sm text-gray-600">{apuesta.descripcion_cuota}</p>
+              <div className="border-t border-gray-300 pt-3 sm:pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm text-gray-600 mb-1">Tipo de Apuesta</p>
+                    <p className="font-medium text-sm sm:text-base break-words">{apuesta.tipo_apuesta}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 break-words">{apuesta.descripcion_cuota}</p>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2">
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-gray-600 mb-1">Monto</p>
-                      <p className="font-bold">{formatCurrency(toNumber(apuesta.monto_apostado))}</p>
+                      <p className="font-bold text-xs sm:text-sm break-words">{formatCurrency(toNumber(apuesta.monto_apostado))}</p>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-gray-600 mb-1">Cuota</p>
-                      <p className="font-bold">{toNumber(apuesta.cuota_aplicada).toFixed(2)}</p>
+                      <p className="font-bold text-xs sm:text-sm">{toNumber(apuesta.cuota_aplicada).toFixed(2)}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">
-                        {apuesta.estado === 'Ganada' ? 'Ganancia' : 'Posible Ganancia'}
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-600 mb-1 break-words">
+                        {apuesta.estado === 'Ganada' ? 'Ganancia' : 'Posible'}
                       </p>
-                      <p className={`font-bold ${
+                      <p className={`font-bold text-xs sm:text-sm break-words ${
                         apuesta.estado === 'Ganada' ? 'text-green-600' : ''
                       }`}>
                         {formatCurrency(
@@ -237,7 +237,7 @@ export const ApuestasPage: React.FC = () => {
                 </div>
 
                 {apuesta.fecha_resolucion && (
-                  <div className="mt-3 pt-3 border-t border-gray-300">
+                  <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-300">
                     <p className="text-xs text-gray-600">
                       Resuelta el {formatDate(apuesta.fecha_resolucion)}
                     </p>

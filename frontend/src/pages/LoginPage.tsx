@@ -28,19 +28,19 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto">
-      <div className="border-2 border-black p-8">
-        <h1 className="text-3xl font-bold mb-6 text-center">Iniciar Sesión</h1>
+    <div className="w-full max-w-md mx-auto px-4">
+      <div className="border-2 border-black p-4 sm:p-6 md:p-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center">Iniciar Sesión</h1>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-600 text-red-600">
+          <div className="mb-4 p-3 bg-red-50 border border-red-600 text-red-600 text-sm sm:text-base break-words">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block mb-2 font-medium">Usuario</label>
+            <label className="block mb-2 font-medium text-sm sm:text-base">Usuario</label>
             <input
               type="text"
               value={username}
@@ -48,11 +48,12 @@ export const LoginPage: React.FC = () => {
               required
               disabled={loading}
               placeholder="Ingrese su usuario"
+              className="w-full text-sm sm:text-base"
             />
           </div>
 
           <div>
-            <label className="block mb-2 font-medium">Contraseña</label>
+            <label className="block mb-2 font-medium text-sm sm:text-base">Contraseña</label>
             <input
               type="password"
               value={password}
@@ -60,19 +61,20 @@ export const LoginPage: React.FC = () => {
               required
               disabled={loading}
               placeholder="Ingrese su contraseña"
+              className="w-full text-sm sm:text-base"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full"
+            className="btn-primary w-full text-sm sm:text-base"
           >
             {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm">
+        <div className="mt-4 sm:mt-6 text-center text-xs sm:text-sm">
           <p className="text-gray-600">
             ¿No tienes cuenta?{' '}
             <Link to="/register" className="text-black font-medium hover:underline">
