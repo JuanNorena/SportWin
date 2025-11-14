@@ -172,12 +172,60 @@ export class TransaccionService {
     }
 
     /**
-     * Obtener todas las transacciones
+     * Obtener todas las transacciones con información básica
      */
     public static async getAll(): Promise<Transaccion[]> {
         const result = await db.query<Transaccion>(
             'SELECT * FROM Transaccion ORDER BY fecha_transaccion DESC'
         );
+        return result.rows;
+    }
+
+    /**
+     * Obtener transacciones con información detallada y legible
+     * Incluye nombres de apostador, tipo de transacción, método de pago y estado
+     * en lugar de solo IDs para facilitar la visualización
+     */
+    public static async getAllDetailed(): Promise<any[]> {
+        const sql = `
+            SELECT 
+                t.id_transaccion,
+                t.fecha_transaccion,
+                t.monto,
+                t.comision,
+                t.monto_neto,
+                t.referencia,
+                t.descripcion,
+                -- Información del apostador
+                t.id_apostador,
+                ap.nombre || ' ' || ap.apellido AS apostador_nombre,
+                u.username AS apostador_username,
+                ap.documento AS apostador_documento,
+                -- Información del tipo de transacción
+                t.id_tipo_transaccion,
+                tt.nombre AS tipo_transaccion_nombre,
+                tt.codigo AS tipo_transaccion_codigo,
+                -- Información del método de pago
+                t.id_metodo_pago,
+                mp.nombre AS metodo_pago_nombre,
+                mp.comision AS metodo_pago_comision,
+                -- Información del estado
+                t.id_estado,
+                e.nombre AS estado_nombre,
+                e.codigo AS estado_codigo,
+                -- Información de la apuesta relacionada (si existe)
+                t.id_apuesta
+            FROM Transaccion t
+            INNER JOIN Apostador ap ON t.id_apostador = ap.id_apostador
+            INNER JOIN Usuario u ON ap.id_usuario = u.id_usuario
+            INNER JOIN TipoTransaccion tt ON t.id_tipo_transaccion = tt.id_tipo_transaccion
+            LEFT JOIN MetodoPago mp ON t.id_metodo_pago = mp.id_metodo_pago
+            INNER JOIN Estado e ON t.id_estado = e.id_estado
+            WHERE e.entidad = 'TRANSACCION'
+            ORDER BY t.fecha_transaccion DESC
+        `;
+        
+        const result = await db.query(sql);
         return result.rows;
     }
 

@@ -6,11 +6,11 @@ import { Liga } from '../models';
  */
 export class LigaService {
     /**
-     * Obtener todas las ligas activas
+     * Obtener todas las ligas (activas e inactivas)
      */
     public static async getAll(): Promise<Liga[]> {
         const result = await db.query<Liga>(
-            'SELECT * FROM Liga WHERE activo = true ORDER BY nombre'
+            'SELECT * FROM Liga ORDER BY nombre'
         );
         return result.rows;
     }
@@ -57,7 +57,6 @@ export class LigaService {
              FROM Liga l
              JOIN Deporte d ON l.id_deporte = d.id_deporte
              LEFT JOIN Pais p ON l.id_pais = p.id_pais
-             WHERE l.activo = true
              ORDER BY l.nombre`
         );
         return result.rows;

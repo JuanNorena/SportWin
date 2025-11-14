@@ -6,11 +6,11 @@ import { Equipo } from '../models';
  */
 export class EquipoService {
     /**
-     * Obtener todos los equipos activos
+     * Obtener todos los equipos (activos e inactivos)
      */
     public static async getAll(): Promise<Equipo[]> {
         const result = await db.query<Equipo>(
-            'SELECT * FROM Equipo WHERE activo = true ORDER BY nombre'
+            'SELECT * FROM Equipo ORDER BY nombre'
         );
         return result.rows;
     }
@@ -50,24 +50,42 @@ export class EquipoService {
 
     /**
      * Obtener equipos con información completa (JOIN)
+     * Retorna equipos con nombres legibles de liga, país, ciudad, estadio y entrenador
+     * en lugar de solo IDs, facilitando la visualización en el frontend
      */
     public static async getAllCompletos(): Promise<any[]> {
-        const result = await db.query(
-            `SELECT e.*, 
-                    l.nombre as liga_nombre,
-                    p.nombre as pais_nombre,
-                    c.nombre as ciudad_nombre,
-                    est.nombre as estadio_nombre,
-                    ent.nombre || ' ' || ent.apellido as entrenador_nombre
-             FROM Equipo e
-             JOIN Liga l ON e.id_liga = l.id_liga
-             LEFT JOIN Pais p ON e.id_pais = p.id_pais
-             LEFT JOIN Ciudad c ON e.id_ciudad = c.id_ciudad
-             LEFT JOIN Estadio est ON e.id_estadio = est.id_estadio
-             LEFT JOIN Entrenador ent ON e.id_entrenador = ent.id_entrenador
-             WHERE e.activo = true
-             ORDER BY e.nombre`
-        );
+        const sql = `
+            SELECT 
+                e.id_equipo,
+                e.nombre AS equipo_nombre,
+                e.fundacion,
+                e.logo_url,
+                e.activo,
+                -- Información de la liga
+                e.id_liga,
+                l.nombre AS liga_nombre,
+                -- Información del país
+                e.id_pais,
+                p.nombre AS pais_nombre,
+                -- Información de la ciudad
+                e.id_ciudad,
+                c.nombre AS ciudad_nombre,
+                -- Información del estadio
+                e.id_estadio,
+                est.nombre AS estadio_nombre,
+                -- Información del entrenador
+                e.id_entrenador,
+                ent.nombre || ' ' || ent.apellido AS entrenador_nombre
+            FROM Equipo e
+            INNER JOIN Liga l ON e.id_liga = l.id_liga
+            LEFT JOIN Pais p ON e.id_pais = p.id_pais
+            LEFT JOIN Ciudad c ON e.id_ciudad = c.id_ciudad
+            LEFT JOIN Estadio est ON e.id_estadio = est.id_estadio
+            LEFT JOIN Entrenador ent ON e.id_entrenador = ent.id_entrenador
+            ORDER BY e.nombre ASC
+        `;
+        
+        const result = await db.query(sql);
         return result.rows;
     }
 

@@ -6,11 +6,11 @@ import { Deporte } from '../models';
  */
 export class DeporteService {
     /**
-     * Obtener todos los deportes activos
+     * Obtener todos los deportes (activos e inactivos)
      */
     public static async getAll(): Promise<Deporte[]> {
         const result = await db.query<Deporte>(
-            'SELECT * FROM Deporte WHERE activo = true ORDER BY nombre'
+            'SELECT * FROM Deporte ORDER BY nombre'
         );
         return result.rows;
     }

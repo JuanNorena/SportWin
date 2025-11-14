@@ -5,19 +5,15 @@ const router = Router();
 
 /**
  * GET /api/partidos
- * Obtener todos los partidos
+ * Obtener todos los partidos con información completa
+ * Por defecto retorna partidos con nombres de equipos, liga, estadio y estado
+ * en lugar de solo IDs para facilitar la visualización
  */
 router.get('/', async (req: Request, res: Response) => {
     try {
-        const { completo } = req.query;
-        
-        if (completo === 'true') {
-            const partidos = await PartidoService.getAllComplete();
-            res.json(partidos);
-        } else {
-            const partidos = await PartidoService.getAll();
-            res.json(partidos);
-        }
+        // Siempre retornar información completa con nombres legibles
+        const partidos = await PartidoService.getAllComplete();
+        res.json(partidos);
     } catch (error: any) {
         console.error('Error al obtener partidos:', error);
         res.status(500).json({

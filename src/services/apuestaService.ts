@@ -121,12 +121,56 @@ export class ApuestaService {
     }
 
     /**
-     * Obtener apuestas detalladas
+     * Obtener apuestas detalladas con toda la información relacionada
+     * Incluye nombres de apostador, partido, equipos, cuota y estado
+     * en lugar de solo IDs para facilitar la comprensión
      */
     public static async getAllDetailed(): Promise<ApuestaDetallada[]> {
-        const result = await db.query<ApuestaDetallada>(
-            'SELECT * FROM vista_apuestas_detalladas ORDER BY fecha_apuesta DESC'
-        );
+        const sql = `
+            SELECT 
+                a.id_apuesta,
+                a.fecha_apuesta,
+                a.monto_apostado,
+                a.cuota_aplicada,
+                a.ganancia_potencial,
+                a.ganancia_real,
+                a.fecha_resolucion,
+                -- Información del apostador
+                a.id_apostador,
+                ap.nombre || ' ' || ap.apellido AS apostador_nombre,
+                u.username AS apostador_username,
+                -- Información de la cuota
+                a.id_cuota,
+                c.valor_cuota AS cuota_valor,
+                -- Información del tipo de apuesta
+                ta.nombre AS tipo_apuesta_nombre,
+                ta.categoria AS tipo_apuesta_categoria,
+                -- Información del partido
+                p.id_partido,
+                el.nombre AS equipo_local_nombre,
+                ev.nombre AS equipo_visitante_nombre,
+                p.fecha_hora AS partido_fecha,
+                -- Información de la liga
+                l.nombre AS liga_nombre,
+                -- Información del estado
+                a.id_estado,
+                e.nombre AS estado_nombre,
+                e.codigo AS estado_codigo
+            FROM Apuesta a
+            INNER JOIN Apostador ap ON a.id_apostador = ap.id_apostador
+            INNER JOIN Usuario u ON ap.id_usuario = u.id_usuario
+            INNER JOIN Cuota c ON a.id_cuota = c.id_cuota
+            INNER JOIN TipoApuesta ta ON c.id_tipo_apuesta = ta.id_tipo_apuesta
+            INNER JOIN Partido p ON c.id_partido = p.id_partido
+            INNER JOIN Equipo el ON p.id_equipo_local = el.id_equipo
+            INNER JOIN Equipo ev ON p.id_equipo_visitante = ev.id_equipo
+            INNER JOIN Liga l ON p.id_liga = l.id_liga
+            INNER JOIN Estado e ON a.id_estado = e.id_estado
+            WHERE e.entidad = 'APUESTA'
+            ORDER BY a.fecha_apuesta DESC
+        `;
+        
+        const result = await db.query<ApuestaDetallada>(sql);
         return result.rows;
     }
 

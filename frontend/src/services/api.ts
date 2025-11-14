@@ -130,18 +130,135 @@ class ApiService {
   }
 
   // ==================== CATÁLOGOS ====================
+  
+  // Deportes
   async getDeportes(): Promise<Deporte[]> {
     const response = await this.api.get<Deporte[]>('/catalogos/deportes');
     return response.data;
   }
 
+  async getDeporteById(id: number): Promise<Deporte> {
+    const response = await this.api.get<Deporte>(`/catalogos/deportes/${id}`);
+    return response.data;
+  }
+
+  async createDeporte(data: Partial<Deporte>): Promise<{ id: number; message: string }> {
+    const response = await this.api.post<{ id: number; message: string }>(
+      '/catalogos/deportes',
+      data
+    );
+    return response.data;
+  }
+
+  async updateDeporte(id: number, data: Partial<Deporte>): Promise<{ message: string }> {
+    const response = await this.api.put<{ message: string }>(
+      `/catalogos/deportes/${id}`,
+      data
+    );
+    return response.data;
+  }
+
+  async deleteDeporte(id: number): Promise<{ message: string }> {
+    const response = await this.api.delete<{ message: string }>(
+      `/catalogos/deportes/${id}`
+    );
+    return response.data;
+  }
+
+  // Ligas
   async getLigas(): Promise<Liga[]> {
     const response = await this.api.get<Liga[]>('/catalogos/ligas');
     return response.data;
   }
 
+  async getLigaById(id: number): Promise<Liga> {
+    const response = await this.api.get<Liga>(`/catalogos/ligas/${id}`);
+    return response.data;
+  }
+
+  async createLiga(data: Partial<Liga>): Promise<{ id: number; message: string }> {
+    const response = await this.api.post<{ id: number; message: string }>(
+      '/catalogos/ligas',
+      data
+    );
+    return response.data;
+  }
+
+  async updateLiga(id: number, data: Partial<Liga>): Promise<{ message: string }> {
+    const response = await this.api.put<{ message: string }>(
+      `/catalogos/ligas/${id}`,
+      data
+    );
+    return response.data;
+  }
+
+  async deleteLiga(id: number): Promise<{ message: string }> {
+    const response = await this.api.delete<{ message: string }>(
+      `/catalogos/ligas/${id}`
+    );
+    return response.data;
+  }
+
+  // Equipos
   async getEquipos(): Promise<Equipo[]> {
     const response = await this.api.get<Equipo[]>('/catalogos/equipos');
+    return response.data;
+  }
+
+  async getEquipoById(id: number): Promise<Equipo> {
+    const response = await this.api.get<Equipo>(`/catalogos/equipos/${id}`);
+    return response.data;
+  }
+
+  async createEquipo(data: Partial<Equipo>): Promise<{ id: number; message: string }> {
+    const response = await this.api.post<{ id: number; message: string }>(
+      '/catalogos/equipos',
+      data
+    );
+    return response.data;
+  }
+
+  async updateEquipo(id: number, data: Partial<Equipo>): Promise<{ message: string }> {
+    const response = await this.api.put<{ message: string }>(
+      `/catalogos/equipos/${id}`,
+      data
+    );
+    return response.data;
+  }
+
+  async deleteEquipo(id: number): Promise<{ message: string }> {
+    const response = await this.api.delete<{ message: string }>(
+      `/catalogos/equipos/${id}`
+    );
+    return response.data;
+  }
+
+  // Datos auxiliares para formularios
+  async getPaises(): Promise<{ id_pais: number; nombre: string }[]> {
+    const response = await this.api.get<{ id_pais: number; nombre: string }[]>(
+      '/catalogos/paises'
+    );
+    return response.data;
+  }
+
+  async getCiudades(): Promise<{ id_ciudad: number; nombre: string }[]> {
+    const response = await this.api.get<{ id_ciudad: number; nombre: string }[]>(
+      '/catalogos/ciudades'
+    );
+    return response.data;
+  }
+
+  async getEstadios(): Promise<{ id_estadio: number; nombre: string }[]> {
+    const response = await this.api.get<{ id_estadio: number; nombre: string }[]>(
+      '/catalogos/estadios'
+    );
+    return response.data;
+  }
+
+  async getEstadosByEntidad(entidad: string): Promise<{ id_estado: number; nombre: string; codigo: string }[]> {
+    const response = await this.api.get<{ id_estado: number; nombre: string; codigo: string }[]>(
+      `/catalogos/estados/${entidad}`
+    );
     return response.data;
   }
 

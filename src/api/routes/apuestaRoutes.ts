@@ -5,11 +5,13 @@ const router = Router();
 
 /**
  * GET /api/apuestas
- * Obtener todas las apuestas
+ * Obtener todas las apuestas con información completa
+ * Retorna apuestas con nombres de apostador, partido, equipos, liga y estado
+ * en lugar de solo IDs para facilitar la visualización
  */
 router.get('/', async (req: Request, res: Response) => {
     try {
-        const apuestas = await ApuestaService.getAll();
+        const apuestas = await ApuestaService.getAllDetailed();
         res.json(apuestas);
     } catch (error: any) {
         console.error('Error al obtener apuestas:', error);

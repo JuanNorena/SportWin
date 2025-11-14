@@ -41,11 +41,46 @@ export class PartidoService {
 
     /**
      * Obtener partidos completos con información detallada
+     * Incluye nombres de equipos, liga, estadio y estado en lugar de solo IDs
+     * para facilitar la visualización y comprensión de los datos
      */
     public static async getAllComplete(): Promise<PartidoCompleto[]> {
-        const result = await db.query<PartidoCompleto>(
-            'SELECT * FROM vista_partidos_completos ORDER BY fecha_hora DESC'
-        );
+        const sql = `
+            SELECT 
+                p.id_partido,
+                p.fecha_hora,
+                p.jornada,
+                p.asistencia,
+                -- Información de la liga
+                p.id_liga,
+                l.nombre AS liga_nombre,
+                -- Información del equipo local
+                p.id_equipo_local,
+                el.nombre AS equipo_local_nombre,
+                -- Información del equipo visitante
+                p.id_equipo_visitante,
+                ev.nombre AS equipo_visitante_nombre,
+                -- Información del estadio
+                p.id_estadio,
+                est.nombre AS estadio_nombre,
+                -- Información del estado del partido
+                p.id_estado,
+                e.nombre AS estado_nombre,
+                e.codigo AS estado_codigo,
+                -- Información del árbitro
+                p.id_arbitro,
+                a.nombre || ' ' || a.apellido AS arbitro_nombre
+            FROM Partido p
+            INNER JOIN Liga l ON p.id_liga = l.id_liga
+            INNER JOIN Equipo el ON p.id_equipo_local = el.id_equipo
+            INNER JOIN Equipo ev ON p.id_equipo_visitante = ev.id_equipo
+            LEFT JOIN Estadio est ON p.id_estadio = est.id_estadio
+            LEFT JOIN Estado e ON p.id_estado = e.id_estado
+            LEFT JOIN Arbitro a ON p.id_arbitro = a.id_arbitro
+            ORDER BY p.fecha_hora DESC
+        `;
+        
+        const result = await db.query<PartidoCompleto>(sql);
         return result.rows;
     }
 

@@ -1,9 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
+import type { Deporte, Liga, Apostador } from '../types';
 
 interface ReporteResultado {
   columns: string[];
   rows: Record<string, unknown>[];
+}
+
+interface ReporteParametro {
+  nombre: string;
+  tipo: 'text' | 'number' | 'date' | 'select';
+  dataSource?: 'deportes' | 'ligas' | 'apostadores' | 'meses' | 'estados_apuesta' | 'tipos_transaccion';
+  opciones?: { value: string; label: string }[];
+  placeholder?: string;
 }
 
 interface Reporte {
@@ -11,12 +20,7 @@ interface Reporte {
   categoria: 'simple' | 'intermedio' | 'avanzado';
   nombre: string;
   descripcion: string;
-  parametros?: {
-    nombre: string;
-    tipo: 'text' | 'number' | 'date' | 'select';
-    opciones?: { value: string; label: string }[];
-    placeholder?: string;
-  }[];
+  parametros?: ReporteParametro[];
 }
 
 const reportes: Reporte[] = [
@@ -30,38 +34,12 @@ const reportes: Reporte[] = [
       {
         nombre: 'mes',
         tipo: 'select',
-        opciones: [
-          { value: '1', label: 'Enero' },
-          { value: '2', label: 'Febrero' },
-          { value: '3', label: 'Marzo' },
-          { value: '4', label: 'Abril' },
-          { value: '5', label: 'Mayo' },
-          { value: '6', label: 'Junio' },
-          { value: '7', label: 'Julio' },
-          { value: '8', label: 'Agosto' },
-          { value: '9', label: 'Septiembre' },
-          { value: '10', label: 'Octubre' },
-          { value: '11', label: 'Noviembre' },
-          { value: '12', label: 'Diciembre' },
-        ],
+        dataSource: 'meses',
       },
       {
         nombre: 'anio',
         tipo: 'number',
         placeholder: '2024',
-      },
-    ],
-  },
-  {
-    id: 'equipos_por_liga',
-    categoria: 'simple',
-    nombre: 'Equipos de una liga',
-    descripcion: 'Muestra todos los equipos que pertenecen a una liga específica',
-    parametros: [
-      {
-        nombre: 'liga',
-        tipo: 'text',
-        placeholder: 'Ej: Liga BetPlay, Premier League',
       },
     ],
   },
@@ -78,6 +56,32 @@ const reportes: Reporte[] = [
       },
     ],
   },
+  {
+    id: 'ligas_por_deporte',
+    categoria: 'simple',
+    nombre: 'Ligas de un deporte',
+    descripcion: 'Muestra todas las ligas disponibles para un deporte específico',
+    parametros: [
+      {
+        nombre: 'id_deporte',
+        tipo: 'select',
+        dataSource: 'deportes',
+      },
+    ],
+  },
+  {
+    id: 'partidos_por_liga',
+    categoria: 'simple',
+    nombre: 'Partidos de una liga',
+    descripcion: 'Lista todos los partidos programados para una liga específica',
+    parametros: [
+      {
+        nombre: 'id_liga',
+        tipo: 'select',
+        dataSource: 'ligas',
+      },
+    ],
+  },
 
   // CONSULTAS INTERMEDIAS
   {
@@ -89,12 +93,7 @@ const reportes: Reporte[] = [
       {
         nombre: 'estado',
         tipo: 'select',
-        opciones: [
-          { value: 'Pendiente', label: 'Pendiente' },
-          { value: 'Ganada', label: 'Ganada' },
-          { value: 'Perdida', label: 'Perdida' },
-          { value: 'Cancelada', label: 'Cancelada' },
-        ],
+        dataSource: 'estados_apuesta',
       },
     ],
   },
@@ -138,17 +137,23 @@ const reportes: Reporte[] = [
       {
         nombre: 'tipo',
         tipo: 'select',
-        opciones: [
-          { value: 'DEPOSITO', label: 'Depósito' },
-          { value: 'RETIRO', label: 'Retiro' },
-          { value: 'APUESTA', label: 'Apuesta' },
-          { value: 'GANANCIA', label: 'Ganancia' },
-          { value: 'REEMBOLSO', label: 'Reembolso' },
-        ],
+        dataSource: 'tipos_transaccion',
       },
     ],
   },
-
+  {
+    id: 'apuestas_por_deporte',
+    categoria: 'intermedio',
+    nombre: 'Estadísticas de apuestas por deporte',
+    descripcion: 'Total de apuestas, monto apostado y ganancias agrupado por deporte',
+    parametros: [
+      {
+        nombre: 'id_deporte',
+        tipo: 'select',
+        dataSource: 'deportes',
+      },
+    ],
+  },
   // CONSULTAS AVANZADAS
   {
     id: 'rentabilidad_apostadores',
@@ -169,19 +174,6 @@ const reportes: Reporte[] = [
     ],
   },
   {
-    id: 'cuotas_populares',
-    categoria: 'avanzado',
-    nombre: 'Cuotas más populares por liga',
-    descripcion: 'Tipos de apuesta más utilizados con tasa de éxito y ganancias promedio',
-    parametros: [
-      {
-        nombre: 'liga',
-        tipo: 'text',
-        placeholder: 'Ej: Premier League',
-      },
-    ],
-  },
-  {
     id: 'analisis_flujo_efectivo',
     categoria: 'avanzado',
     nombre: 'Análisis de flujo de efectivo mensual',
@@ -194,6 +186,53 @@ const reportes: Reporte[] = [
       },
     ],
   },
+  {
+    id: 'rendimiento_por_liga',
+    categoria: 'avanzado',
+    nombre: 'Rendimiento de la casa por liga',
+    descripcion: 'Análisis financiero completo por liga: total apostado, pagado y margen de ganancia',
+    parametros: [
+      {
+        nombre: 'id_liga',
+        tipo: 'select',
+        dataSource: 'ligas',
+      },
+      {
+        nombre: 'fecha_inicio',
+        tipo: 'date',
+      },
+      {
+        nombre: 'fecha_fin',
+        tipo: 'date',
+      },
+    ],
+  },
+  {
+    id: 'patron_apuestas_usuario',
+    categoria: 'avanzado',
+    nombre: 'Patrón de comportamiento de apostadores',
+    descripcion: 'Análisis de preferencias: deportes favoritos, horarios, tipos de apuesta y rendimiento',
+    parametros: [
+      {
+        nombre: 'limite',
+        tipo: 'number',
+        placeholder: 'Top N apostadores (ej: 20)',
+      },
+    ],
+  },
+  {
+    id: 'efectividad_cuotas',
+    categoria: 'avanzado',
+    nombre: 'Efectividad de cuotas por deporte',
+    descripcion: 'Análisis de precisión de cuotas: tasa de acierto, margen real vs esperado',
+    parametros: [
+      {
+        nombre: 'id_deporte',
+        tipo: 'select',
+        dataSource: 'deportes',
+      },
+    ],
+  },
 ];
 
 export const ReportesPage = () => {
@@ -202,6 +241,77 @@ export const ReportesPage = () => {
   const [resultado, setResultado] = useState<ReporteResultado | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Estados para datos dinámicos
+  const [deportes, setDeportes] = useState<Deporte[]>([]);
+  const [ligas, setLigas] = useState<Liga[]>([]);
+  const [apostadores, setApostadores] = useState<Apostador[]>([]);
+
+  // Cargar datos de catálogos al montar el componente
+  useEffect(() => {
+    loadCatalogos();
+  }, []);
+
+  const loadCatalogos = async () => {
+    try {
+      const [deportesData, ligasData, apostadoresData] = await Promise.all([
+        apiService.getDeportes(),
+        apiService.getLigas(),
+        apiService.getApostadores(),
+      ]);
+      setDeportes(deportesData);
+      setLigas(ligasData);
+      setApostadores(apostadoresData);
+    } catch (err) {
+      console.error('Error cargando catálogos:', err);
+    }
+  };
+
+  const getOpcionesSelect = (dataSource: string): { value: string; label: string }[] => {
+    switch (dataSource) {
+      case 'deportes':
+        return deportes.map((d) => ({ value: String(d.id_deporte), label: d.nombre }));
+      case 'ligas':
+        return ligas.map((l) => ({ value: String(l.id_liga), label: l.nombre }));
+      case 'apostadores':
+        return apostadores.map((a) => ({ 
+          value: String(a.id_apostador), 
+          label: `${a.documento} - ${a.id_apostador}` 
+        }));
+      case 'meses':
+        return [
+          { value: '1', label: 'Enero' },
+          { value: '2', label: 'Febrero' },
+          { value: '3', label: 'Marzo' },
+          { value: '4', label: 'Abril' },
+          { value: '5', label: 'Mayo' },
+          { value: '6', label: 'Junio' },
+          { value: '7', label: 'Julio' },
+          { value: '8', label: 'Agosto' },
+          { value: '9', label: 'Septiembre' },
+          { value: '10', label: 'Octubre' },
+          { value: '11', label: 'Noviembre' },
+          { value: '12', label: 'Diciembre' },
+        ];
+      case 'estados_apuesta':
+        return [
+          { value: 'Pendiente', label: 'Pendiente' },
+          { value: 'Ganada', label: 'Ganada' },
+          { value: 'Perdida', label: 'Perdida' },
+          { value: 'Cancelada', label: 'Cancelada' },
+        ];
+      case 'tipos_transaccion':
+        return [
+          { value: 'DEPOSITO', label: 'Depósito' },
+          { value: 'RETIRO', label: 'Retiro' },
+          { value: 'APUESTA', label: 'Apuesta' },
+          { value: 'GANANCIA', label: 'Ganancia' },
+          { value: 'REEMBOLSO', label: 'Reembolso' },
+        ];
+      default:
+        return [];
+    }
+  };
 
   const handleSeleccionarReporte = (reporte: Reporte) => {
     setReporteSeleccionado(reporte);
@@ -387,7 +497,10 @@ export const ReportesPage = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                             <option value="">Seleccione...</option>
-                            {param.opciones?.map((opcion) => (
+                            {(param.dataSource
+                              ? getOpcionesSelect(param.dataSource)
+                              : param.opciones || []
+                            ).map((opcion) => (
                               <option key={opcion.value} value={opcion.value}>
                                 {opcion.label}
                               </option>

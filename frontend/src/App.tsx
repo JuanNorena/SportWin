@@ -9,6 +9,7 @@ import { PartidoDetailPage } from './pages/PartidoDetailPage';
 import { ApuestasPage } from './pages/ApuestasPage';
 import { SaldoPage } from './pages/SaldoPage';
 import { ReportesPage } from './pages/ReportesPage';
+import { AdminPage } from './pages/AdminPage';
 
 // Componente para rutas protegidas
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
@@ -19,6 +20,25 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+};
+
+// Componente para rutas de administrador
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, user, loading } = useAuth();
+
+  if (loading) {
+    return <div className="text-center py-12">Cargando...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user?.rol !== 'admin') {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
 };
 
 function App() {
@@ -68,6 +88,14 @@ function App() {
                 <PrivateRoute>
                   <ReportesPage />
                 </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <AdminPage />
+                </AdminRoute>
               }
             />
           </Routes>

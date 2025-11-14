@@ -33,6 +33,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <Link to="/reportes" className="hover:underline">
                   Reportes
                 </Link>
+                {user?.rol === 'admin' && (
+                  <Link 
+                    to="/admin" 
+                    className="hover:underline text-blue-600 font-semibold"
+                  >
+                    🔧 Admin
+                  </Link>
+                )}
                 <span className="text-gray-600">
                   {user?.nombre} {user?.apellido}
                 </span>

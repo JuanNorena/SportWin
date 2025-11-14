@@ -5,11 +5,13 @@ const router = Router();
 
 /**
  * GET /api/transacciones
- * Obtener todas las transacciones
+ * Obtener todas las transacciones con información completa
+ * Retorna transacciones con nombres de apostador, tipo, método de pago y estado
+ * en lugar de solo IDs para facilitar la visualización
  */
 router.get('/', async (req: Request, res: Response) => {
     try {
-        const transacciones = await TransaccionService.getAll();
+        const transacciones = await TransaccionService.getAllDetailed();
         res.json(transacciones);
     } catch (error: any) {
         console.error('Error al obtener transacciones:', error);
