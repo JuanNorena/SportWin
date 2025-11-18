@@ -1,14 +1,48 @@
 import db from '../utils/database';
 
+/**
+ * ReporteResultado
+ * 
+ * Interfaz que define la estructura del resultado devuelto por las consultas
+ * dinámicas de reportes. Contiene los nombres de columnas (columns) y las
+ * filas como arreglos de objetos donde la llave es el nombre de la columna.
+ *
+ * Ejemplo:
+ * {
+ *   columns: ['id', 'nombre'],
+ *   rows: [{ id: 1, nombre: 'example' }]
+ * }
+ */
 interface ReporteResultado {
+  /** Lista de nombres de columna devueltos por la consulta */
   columns: string[];
+  /** Filas del resultado, cada fila es un mapa key/value con valores primitivos */
   rows: Record<string, unknown>[];
 }
 
-// Mapeo de reportes a sus consultas SQL
+/**
+ * Mapeo de reportes a su consulta SQL.
+ *
+ * Cada entrada del objeto corresponde a una consulta (reporte) y su valor es una
+ * función que recibe `params` (mapa de parámetros en formato string) y devuelve
+ * la consulta SQL ya interpolada. Este enfoque simplifica la interacción a
+ * nivel de servicio, pero se debe tener especial cuidado con la interpolación
+ * directa (riesgo de inyección SQL). Recomendación: migrar a prepared statements
+ * (consultas parametrizadas) y validar/sanitizar los parámetros antes de usarlos.
+ */
 const reportesSQL: Record<string, (params: Record<string, string>) => string> = {
   // ==================== CONSULTAS SIMPLES ====================
   
+  /**
+   * partidos_por_mes
+   *
+   * Parámetros:
+   * - `mes`: número del mes (1..12)
+   * - `anio`: año (ej. 2024)
+   *
+   * Devuelve los partidos finalizados en un mes y año especificados con información
+   * mínima: equipos local/visitante, estado, goles y liga.
+   */
   partidos_por_mes: (params) => `
     SELECT 
       p.id_partido,
@@ -31,6 +65,16 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
     ORDER BY p.fecha_hora DESC
   `,
 
+  /**
+   * apostadores_activos
+   *
+   * Parámetros:
+   * - `monto`: Monto mínimo de saldo (`saldo_actual`) para filtrar apostadores.
+   *
+   * Devuelve lista de apostadores con saldo superior al parámetro especificado
+   * ordenados por saldo descendente. Incluye información de usuario básica
+   * y estado de verificación.
+   */
   apostadores_activos: (params) => `
     SELECT 
       a.id_apostador,
@@ -47,6 +91,15 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
     ORDER BY a.saldo_actual DESC
   `,
 
+  /**
+   * ligas_por_deporte
+   *
+   * Parámetros:
+   * - `id_deporte`: id del deporte a consultar.
+   *
+   * Devuelve ligas asociadas a un deporte, con información de país, temporada, y
+   * contadores como total de equipos y partidos.
+   */
   ligas_por_deporte: (params) => `
     SELECT 
       l.id_liga,
@@ -67,6 +120,16 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
     ORDER BY l.nombre
   `,
 
+  /**
+   * partidos_por_liga
+   *
+   * Parámetros:
+   * - `id_liga`: id de la liga a consultar.
+   *
+   * Devuelve los partidos programados o realizados de la liga, con detalles del
+   * estadio, jornada y resultado (si existe). Incluye `resultado` calculado
+   * por comparación de goles.
+   */
   partidos_por_liga: (params) => `
     SELECT 
       p.id_partido,
@@ -96,6 +159,15 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
 
   // ==================== CONSULTAS INTERMEDIAS ====================
   
+  /**
+   * apuestas_por_estado
+   *
+   * Parámetros:
+   * - `estado`: nombre del estado (ej. 'Ganada', 'Perdida', 'Pendiente').
+   *
+   * Agrega y promedia métricas clave por estado de apuestas (conteo, montos,
+   * min/max y total de ganancias cuando el estado es 'Ganada').
+   */
   apuestas_por_estado: (params) => `
     SELECT 
       COUNT(*) AS total_apuestas,
@@ -109,6 +181,16 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
     WHERE e.nombre = '${params.estado}'
   `,
 
+  /**
+   * top_apostadores
+   *
+   * Parámetros:
+   * - `limite`: límite de resultados/top N.
+   *
+   * Genera un ranking de apostadores por monto total apostado. Incluye datos
+   * agregados de apuestas y ganancias/pérdidas; puede resultar útil para
+   * identificar clientes de mayor valor o riesgo.
+   */
   top_apostadores: (params) => `
     SELECT 
       ap.id_apostador,
@@ -128,6 +210,16 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
     LIMIT ${params.limite}
   `,
 
+  /**
+   * partidos_con_resultados
+   *
+   * Parámetros:
+   * - `fecha_inicio`: fecha ISO de inicio para el rango.
+   * - `fecha_fin`: fecha ISO de fin para el rango.
+   *
+   * Retorna partidos con resultados dentro de un rango de fechas, además de
+   * estadísticas de tarjetas, córners y el estadio asociado.
+   */
   partidos_con_resultados: (params) => `
     SELECT 
       p.id_partido,
@@ -156,6 +248,15 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
     ORDER BY p.fecha_hora DESC
   `,
 
+  /**
+   * transacciones_por_tipo
+   *
+   * Parámetros:
+   * - `tipo`: código del tipo de transacción (por ejemplo, 'DEPOSITO').
+   *
+   * Resume transacciones completadas por tipo: conteo, sumas, comisiones y
+   * métricas básicas.
+   */
   transacciones_por_tipo: (params) => `
     SELECT 
       COUNT(*) AS total_transacciones,
@@ -172,6 +273,15 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
       AND e.codigo = 'COMPLETADA'
   `,
 
+  /**
+   * apuestas_por_deporte
+   *
+   * Parámetros:
+   * - `id_deporte`: id del deporte a consultar.
+   *
+   * Agrupa estadísticas de apuestas por deporte: total, monto, margen de la
+   * casa y número de apostadores únicos.
+   */
   apuestas_por_deporte: (params) => `
     SELECT 
       d.nombre AS deporte,
@@ -193,6 +303,16 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
 
   // ==================== CONSULTAS AVANZADAS ====================
   
+  /**
+   * rentabilidad_apostadores
+   *
+   * Parámetros:
+   * - `fecha_inicio` y `fecha_fin`: rango temporal ISO.
+   *
+   * Analiza la rentabilidad por apostador en un rango de fechas: total
+   * apostado/ganado/perdido, balance neto y porcentaje de rentabilidad (se
+   * excluyen apostadores sin apuestas en el rango).
+   */
   rentabilidad_apostadores: (params) => `
     SELECT 
       ap.id_apostador,
@@ -228,6 +348,16 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
     ORDER BY rentabilidad_porcentaje DESC
   `,
 
+  /**
+   * analisis_flujo_efectivo
+   *
+   * Parámetros:
+   * - `anio`: año (ej. 2024).
+   *
+   * Agrupa transacciones por mes y calcula ingresos/egresos, balance neto,
+   * usuarios activos, total de transacciones y comisiones, además de un ratio
+   * ingresos/egresos.
+   */
   analisis_flujo_efectivo: (params) => `
     WITH FlujoPorMes AS (
       SELECT 
@@ -261,6 +391,16 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
     ORDER BY mes
   `,
 
+  /**
+   * rendimiento_por_liga
+   *
+   * Parámetros:
+   * - `id_liga`, `fecha_inicio`, `fecha_fin` (fecha_inicio/fecha_fin opcionales
+   * para limitar el periodo en estadísticas).
+   *
+   * Devuelve métricas agregadas por liga: conteo de partidos/apuestas, totales,
+   * margen y promedio de cuota para el rango especificado.
+   */
   rendimiento_por_liga: (params) => `
     SELECT 
       l.nombre AS liga,
@@ -286,6 +426,15 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
     GROUP BY l.id_liga, l.nombre
   `,
 
+  /**
+   * patron_apuestas_usuario
+   *
+   * Parámetros:
+   * - `limite`: limita la cantidad de apostadores a retornar (Top N).
+   *
+   * Analiza patrones de usuario: deportes favoritos, horas promedio de apuesta,
+   * categorías preferidas, volúmenes y tasa de éxito.
+   */
   patron_apuestas_usuario: (params) => `
     SELECT 
       ap.id_apostador,
@@ -318,6 +467,15 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
     LIMIT ${params.limite}
   `,
 
+  /**
+   * efectividad_cuotas
+   *
+   * Parámetros:
+   * - `id_deporte`: id del deporte a consultar.
+   *
+   * Calcula métricas de efectividad por tipo de apuesta y cuota: tasas de acierto,
+   * promedio de cuota, volumen apostado y margen para la casa.
+   */
   efectividad_cuotas: (params) => `
     SELECT 
       ta.nombre AS tipo_apuesta,
@@ -347,6 +505,26 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
   `,
 };
 
+/**
+ * ejecutarReporteSQL
+ *
+ * Ejecuta una consulta SQL mapeada por `reporteId` usando los parámetros
+ * provistos en `parametros`. Retorna el resultado en la estructura `ReporteResultado`.
+ *
+ * Notas de seguridad y validación:
+ * - Actualmente la implementación construye queries mediante interpolación de
+ *   strings (plantillas backticks) usando `params` sin sanitizarlos. Esto expone
+ *   a inyección SQL si los valores de `parametros` provienen de clientes.
+ * - Recomendación: cambiar la implementación a consultas parametrizadas usando
+ *   `db.query('SELECT ... WHERE id = $1', [param])` o utilidades del driver que
+ *   ofrezcan binding de parámetros.
+ * - Validar tipos y rangos de entrada (ej. números, fechas) antes de construir la consulta.
+ *
+ * @param reporteId - Identificador del reporte declarado en `reportesSQL`.
+ * @param parametros - Mapa de parámetros (string -> string) que el mapeo espera.
+ * @returns Un objeto `ReporteResultado` con `columns` y `rows`.
+ * @throws Error si el reporte no existe o la ejecución falla.
+ */
 export const ejecutarReporteSQL = async (
   reporteId: string,
   parametros: Record<string, string>
@@ -358,10 +536,12 @@ export const ejecutarReporteSQL = async (
   }
 
   try {
-    // Generar la consulta SQL con los parámetros
+    // Generar la consulta SQL con los parámetros (actualmente interpolada)
     const query = reporteQuery(parametros);
-    
-    // Ejecutar la consulta
+
+    // ADVERTENCIA: El uso de `db.query(query)` con query interpolada es vulnerable
+    // a inyección SQL si los parámetros no han sido sanitizados adecuadamente.
+    // Implementar consultas parametrizadas cuando sea posible.
     const result = await db.query(query);
 
     // Extraer nombres de columnas
