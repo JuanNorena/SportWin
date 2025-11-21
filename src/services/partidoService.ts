@@ -56,10 +56,10 @@ export class PartidoService {
                 l.nombre AS liga_nombre,
                 -- Información del equipo local
                 p.id_equipo_local,
-                el.nombre AS equipo_local_nombre,
+                el.nombre AS equipo_local,
                 -- Información del equipo visitante
                 p.id_equipo_visitante,
-                ev.nombre AS equipo_visitante_nombre,
+                ev.nombre AS equipo_visitante,
                 -- Información del estadio
                 p.id_estadio,
                 est.nombre AS estadio_nombre,

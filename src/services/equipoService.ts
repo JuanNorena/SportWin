@@ -57,7 +57,7 @@ export class EquipoService {
         const sql = `
             SELECT 
                 e.id_equipo,
-                e.nombre AS equipo_nombre,
+                e.nombre,
                 e.fundacion,
                 e.logo_url,
                 e.activo,
