@@ -44,6 +44,7 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
    * mínima: equipos local/visitante, estado, goles y liga.
    */
   partidos_por_mes: (params) => `
+    -- Selecciona detalles del partido y nombres de equipos
     SELECT 
       p.id_partido,
       el.nombre AS equipo_local,
@@ -54,11 +55,14 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
       r.goles_local,
       r.goles_visitante
     FROM Partido p
+    -- Une con equipos para obtener nombres
     JOIN Equipo el ON p.id_equipo_local = el.id_equipo
     JOIN Equipo ev ON p.id_equipo_visitante = ev.id_equipo
     JOIN Liga l ON p.id_liga = l.id_liga
     JOIN Estado e ON p.id_estado = e.id_estado
+    -- Obtiene resultados si existen
     LEFT JOIN Resultado r ON p.id_partido = r.id_partido
+    -- Filtra por mes, año y estado finalizado
     WHERE EXTRACT(MONTH FROM p.fecha_hora) = ${params.mes}
       AND EXTRACT(YEAR FROM p.fecha_hora) = ${params.anio}
       AND e.codigo = 'FINALIZADO'
@@ -76,6 +80,7 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
    * y estado de verificación.
    */
   apostadores_activos: (params) => `
+    -- Selecciona información del apostador y usuario
     SELECT 
       a.id_apostador,
       u.username,
@@ -87,6 +92,7 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
       a.verificado
     FROM Apostador a
     JOIN Usuario u ON a.id_usuario = u.id_usuario
+    -- Filtra por saldo mínimo
     WHERE a.saldo_actual > ${params.monto}
     ORDER BY a.saldo_actual DESC
   `,
@@ -101,6 +107,7 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
    * contadores como total de equipos y partidos.
    */
   ligas_por_deporte: (params) => `
+    -- Obtiene estadísticas de ligas para un deporte
     SELECT 
       l.id_liga,
       l.nombre AS liga,
@@ -108,6 +115,7 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
       l.temporada,
       l.fecha_inicio,
       l.fecha_fin,
+      -- Cuenta equipos y partidos únicos
       COUNT(DISTINCT e.id_equipo) AS total_equipos,
       COUNT(DISTINCT pa.id_partido) AS total_partidos,
       l.activo
@@ -131,6 +139,7 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
    * por comparación de goles.
    */
   partidos_por_liga: (params) => `
+    -- Detalles de partidos en una liga específica
     SELECT 
       p.id_partido,
       el.nombre AS equipo_local,
@@ -141,6 +150,7 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
       p.jornada,
       r.goles_local,
       r.goles_visitante,
+      -- Determina el ganador basado en goles
       CASE 
         WHEN r.goles_local > r.goles_visitante THEN el.nombre
         WHEN r.goles_visitante > r.goles_local THEN ev.nombre
@@ -169,10 +179,12 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
    * min/max y total de ganancias cuando el estado es 'Ganada').
    */
   apuestas_por_estado: (params) => `
+    -- Resumen estadístico de apuestas por estado
     SELECT 
       COUNT(*) AS total_apuestas,
       SUM(a.monto_apostado) AS monto_total_apostado,
       AVG(a.monto_apostado) AS monto_promedio,
+      -- Calcula ganancias solo para apuestas ganadas
       SUM(CASE WHEN e.codigo = 'GANADA' THEN a.ganancia_real ELSE 0 END) AS total_ganancias,
       MIN(a.monto_apostado) AS apuesta_minima,
       MAX(a.monto_apostado) AS apuesta_maxima
@@ -192,12 +204,14 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
    * identificar clientes de mayor valor o riesgo.
    */
   top_apostadores: (params) => `
+    -- Ranking de apostadores por volumen de apuestas
     SELECT 
       ap.id_apostador,
       u.username,
       u.nombre || ' ' || u.apellido AS nombre_completo,
       COUNT(a.id_apuesta) AS total_apuestas,
       SUM(a.monto_apostado) AS monto_total_apostado,
+      -- Separa ganancias y pérdidas
       SUM(CASE WHEN e.codigo = 'GANADA' THEN a.ganancia_real ELSE 0 END) AS total_ganado,
       SUM(CASE WHEN e.codigo = 'PERDIDA' THEN a.monto_apostado ELSE 0 END) AS total_perdido,
       ap.saldo_actual
@@ -221,6 +235,7 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
    * estadísticas de tarjetas, córners y el estadio asociado.
    */
   partidos_con_resultados: (params) => `
+    -- Resultados detallados de partidos en rango de fechas
     SELECT 
       p.id_partido,
       el.nombre AS equipo_local,
@@ -229,11 +244,13 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
       l.nombre AS liga,
       r.goles_local,
       r.goles_visitante,
+      -- Determina ganador
       CASE 
         WHEN r.goles_local > r.goles_visitante THEN el.nombre
         WHEN r.goles_visitante > r.goles_local THEN ev.nombre
         ELSE 'Empate'
       END AS ganador,
+      -- Suma estadísticas totales
       r.tarjetas_amarillas_local + r.tarjetas_amarillas_visitante AS total_tarjetas_amarillas,
       r.tarjetas_rojas_local + r.tarjetas_rojas_visitante AS total_tarjetas_rojas,
       r.corners_local + r.corners_visitante AS total_corners,
@@ -258,6 +275,7 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
    * métricas básicas.
    */
   transacciones_por_tipo: (params) => `
+    -- Resumen financiero por tipo de transacción
     SELECT 
       COUNT(*) AS total_transacciones,
       SUM(t.monto) AS monto_total,
@@ -283,11 +301,13 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
    * casa y número de apostadores únicos.
    */
   apuestas_por_deporte: (params) => `
+    -- Métricas de apuestas agrupadas por deporte
     SELECT 
       d.nombre AS deporte,
       COUNT(a.id_apuesta) AS total_apuestas,
       SUM(a.monto_apostado) AS monto_total_apostado,
       SUM(CASE WHEN e.codigo = 'GANADA' THEN a.ganancia_real ELSE 0 END) AS total_pagado,
+      -- Calcula margen de la casa (apostado - pagado)
       SUM(a.monto_apostado) - SUM(CASE WHEN e.codigo = 'GANADA' THEN a.ganancia_real ELSE 0 END) AS margen_casa,
       AVG(a.monto_apostado) AS apuesta_promedio,
       COUNT(DISTINCT a.id_apostador) AS apostadores_unicos
@@ -314,6 +334,7 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
    * excluyen apostadores sin apuestas en el rango).
    */
   rentabilidad_apostadores: (params) => `
+    -- Análisis de rentabilidad por apostador
     SELECT 
       ap.id_apostador,
       u.username,
@@ -322,8 +343,10 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
       SUM(a.monto_apostado) AS total_apostado,
       SUM(CASE WHEN e.codigo = 'GANADA' THEN a.ganancia_real ELSE 0 END) AS total_ganado,
       SUM(CASE WHEN e.codigo = 'PERDIDA' THEN a.monto_apostado ELSE 0 END) AS total_perdido,
+      -- Balance neto (ganado - apostado)
       SUM(CASE WHEN e.codigo = 'GANADA' THEN a.ganancia_real ELSE 0 END) - 
         SUM(a.monto_apostado) AS balance,
+      -- Porcentaje de retorno sobre inversión (ROI)
       ROUND(
         (SUM(CASE WHEN e.codigo = 'GANADA' THEN a.ganancia_real ELSE 0 END) - 
          SUM(a.monto_apostado)) * 100.0 / 
@@ -332,6 +355,7 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
       ) AS rentabilidad_porcentaje,
       COUNT(CASE WHEN e.codigo = 'GANADA' THEN 1 END) AS apuestas_ganadas,
       COUNT(CASE WHEN e.codigo = 'PERDIDA' THEN 1 END) AS apuestas_perdidas,
+      -- Tasa de éxito (ganadas / total resueltas)
       ROUND(
         COUNT(CASE WHEN e.codigo = 'GANADA' THEN 1 END) * 100.0 / 
         NULLIF(COUNT(CASE WHEN e.codigo IN ('GANADA', 'PERDIDA') THEN 1 END), 0),
@@ -340,6 +364,7 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
       ap.saldo_actual
     FROM Apostador ap
     JOIN Usuario u ON ap.id_usuario = u.id_usuario
+    -- Filtra apuestas en el rango de fechas
     LEFT JOIN Apuesta a ON ap.id_apostador = a.id_apostador 
       AND a.fecha_apuesta BETWEEN '${params.fecha_inicio}' AND '${params.fecha_fin}'
     LEFT JOIN Estado e ON a.id_estado = e.id_estado
@@ -359,10 +384,12 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
    * ingresos/egresos.
    */
   analisis_flujo_efectivo: (params) => `
+    -- CTE para agregar flujos por mes
     WITH FlujoPorMes AS (
       SELECT 
         EXTRACT(MONTH FROM t.fecha_transaccion) AS mes,
         TO_CHAR(t.fecha_transaccion, 'Month') AS nombre_mes,
+        -- Suma ingresos y egresos según tipo de transacción
         SUM(CASE WHEN tt.afecta_saldo = 'suma' THEN t.monto_neto ELSE 0 END) AS ingresos,
         SUM(CASE WHEN tt.afecta_saldo = 'resta' THEN t.monto_neto ELSE 0 END) AS egresos,
         SUM(CASE WHEN tt.afecta_saldo = 'suma' THEN t.monto_neto ELSE 0 END) - 
@@ -377,6 +404,7 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
         AND e.codigo = 'COMPLETADA'
       GROUP BY EXTRACT(MONTH FROM t.fecha_transaccion), TO_CHAR(t.fecha_transaccion, 'Month')
     )
+    -- Selección final con cálculo de ratio
     SELECT 
       mes,
       TRIM(nombre_mes) AS nombre_mes,
@@ -402,12 +430,14 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
    * margen y promedio de cuota para el rango especificado.
    */
   rendimiento_por_liga: (params) => `
+    -- Métricas de rendimiento financiero por liga
     SELECT 
       l.nombre AS liga,
       COUNT(DISTINCT p.id_partido) AS partidos_totales,
       COUNT(DISTINCT a.id_apuesta) AS apuestas_totales,
       SUM(a.monto_apostado) AS total_apostado,
       SUM(CASE WHEN e.codigo = 'GANADA' THEN a.ganancia_real ELSE 0 END) AS total_pagado,
+      -- Margen de ganancia de la casa
       SUM(a.monto_apostado) - SUM(CASE WHEN e.codigo = 'GANADA' THEN a.ganancia_real ELSE 0 END) AS margen_ganancia,
       ROUND(
         (SUM(a.monto_apostado) - SUM(CASE WHEN e.codigo = 'GANADA' THEN a.ganancia_real ELSE 0 END)) * 100.0 / 
@@ -436,16 +466,19 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
    * categorías preferidas, volúmenes y tasa de éxito.
    */
   patron_apuestas_usuario: (params) => `
+    -- Análisis de comportamiento de apuestas por usuario
     SELECT 
       ap.id_apostador,
       u.username,
       u.nombre || ' ' || u.apellido AS nombre_completo,
       COUNT(a.id_apuesta) AS total_apuestas,
+      -- Agrega deportes y categorías preferidas
       STRING_AGG(DISTINCT d.nombre, ', ') AS deportes_favoritos,
       ROUND(AVG(EXTRACT(HOUR FROM a.fecha_apuesta)), 2) AS hora_promedio_apuesta,
       STRING_AGG(DISTINCT ta.categoria, ', ') AS categorias_preferidas,
       SUM(a.monto_apostado) AS monto_total,
       SUM(CASE WHEN e.codigo = 'GANADA' THEN a.ganancia_real ELSE 0 END) AS total_ganado,
+      -- Tasa de éxito del usuario
       ROUND(
         COUNT(CASE WHEN e.codigo = 'GANADA' THEN 1 END) * 100.0 / 
         NULLIF(COUNT(CASE WHEN e.codigo IN ('GANADA', 'PERDIDA') THEN 1 END), 0),
@@ -477,6 +510,7 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
    * promedio de cuota, volumen apostado y margen para la casa.
    */
   efectividad_cuotas: (params) => `
+    -- Análisis de efectividad de cuotas por tipo de apuesta
     SELECT 
       ta.nombre AS tipo_apuesta,
       ta.categoria,
@@ -484,6 +518,7 @@ const reportesSQL: Record<string, (params: Record<string, string>) => string> = 
       AVG(c.valor_cuota) AS cuota_promedio,
       COUNT(CASE WHEN e.codigo = 'GANADA' THEN 1 END) AS apuestas_ganadas,
       COUNT(CASE WHEN e.codigo = 'PERDIDA' THEN 1 END) AS apuestas_perdidas,
+      -- Tasa de acierto real vs probabilidad implícita
       ROUND(
         COUNT(CASE WHEN e.codigo = 'GANADA' THEN 1 END) * 100.0 / 
         NULLIF(COUNT(CASE WHEN e.codigo IN ('GANADA', 'PERDIDA') THEN 1 END), 0),
